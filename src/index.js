@@ -1916,21 +1916,187 @@ ${blocSGL}
 </div>
 
 
+<!-- ============================================== -->
 <!-- GRAPHE -->
+<!-- ============================================== -->
 
 <div class="card">
 
 <h2>
-Débit — mois en cours
+Débit — 30 derniers jours
 </h2>
 
+<svg
+  id="debitGraph"
+  viewBox="0 0 800 260"
+  width="100%"
+  height="260"
+  preserveAspectRatio="none"
+  style="background:#f8f9fa;border-radius:6px;"
+>
 
-<div class="placeholder">
+${(() => {
 
-Graphe à venir
+  if (
+    !Array.isArray(debitGraph) ||
+    debitGraph.length < 2
+  ) {
+    return `
+      <text
+        x="400"
+        y="130"
+        text-anchor="middle"
+        fill="#777"
+        font-size="14"
+      >
+        Données insuffisantes
+      </text>
+    `;
+  }
 
-</div>
+  const largeur = 800;
+  const hauteur = 260;
 
+  const margeGauche = 50;
+  const margeDroite = 15;
+  const margeHaut = 15;
+  const margeBas = 30;
+
+  const graphW =
+    largeur - margeGauche - margeDroite;
+
+  const graphH =
+    hauteur - margeHaut - margeBas;
+
+
+  const valeurs =
+    debitGraph.map(
+      p => Number(p.debit)
+    );
+
+  const minDebit =
+    Math.min(...valeurs);
+
+  const maxDebit =
+    Math.max(...valeurs);
+
+  const amplitude =
+    Math.max(
+      maxDebit - minDebit,
+      1
+    );
+
+
+  const points =
+    debitGraph.map((p, i) => {
+
+      const x =
+        margeGauche +
+        (i / (debitGraph.length - 1)) *
+        graphW;
+
+      const y =
+        margeHaut +
+        graphH -
+        (
+          (Number(p.debit) - minDebit) /
+          amplitude
+        ) *
+        graphH;
+
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+
+    }).join(" ");
+
+
+  return `
+
+    <!-- axe vertical -->
+    <line
+      x1="${margeGauche}"
+      y1="${margeHaut}"
+      x2="${margeGauche}"
+      y2="${margeHaut + graphH}"
+      stroke="#999"
+    />
+
+    <!-- axe horizontal -->
+    <line
+      x1="${margeGauche}"
+      y1="${margeHaut + graphH}"
+      x2="${margeGauche + graphW}"
+      y2="${margeHaut + graphH}"
+      stroke="#999"
+    />
+
+    <!-- valeur min -->
+    <text
+      x="${margeGauche - 8}"
+      y="${margeHaut + graphH}"
+      text-anchor="end"
+      dominant-baseline="middle"
+      font-size="11"
+      fill="#666"
+    >
+      ${minDebit.toFixed(0)}
+    </text>
+
+    <!-- valeur max -->
+    <text
+      x="${margeGauche - 8}"
+      y="${margeHaut}"
+      text-anchor="end"
+      dominant-baseline="middle"
+      font-size="11"
+      fill="#666"
+    >
+      ${maxDebit.toFixed(0)}
+    </text>
+
+    <!-- courbe -->
+    <polyline
+      points="${points}"
+      fill="none"
+      stroke="#1976d2"
+      stroke-width="2"
+    />
+
+    <!-- date début -->
+    <text
+      x="${margeGauche}"
+      y="${hauteur - 8}"
+      font-size="11"
+      fill="#666"
+    >
+      ${new Date(
+        debitGraph[0].t
+      ).toLocaleDateString(
+        "fr-FR"
+      )}
+    </text>
+
+    <!-- date fin -->
+    <text
+      x="${largeur - margeDroite}"
+      y="${hauteur - 8}"
+      text-anchor="end"
+      font-size="11"
+      fill="#666"
+    >
+      ${new Date(
+        debitGraph[
+          debitGraph.length - 1
+        ].t
+      ).toLocaleDateString(
+        "fr-FR"
+      )}
+    </text>
+
+  `;
+
+})()}
+
+</svg>
 
 </div>
 

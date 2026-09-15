@@ -735,16 +735,21 @@ async function afficherPage(env) {
     await env["HYDRO-CHARTDATA"].list({
       prefix: "debit_"
     });
+  
+  const clesDebit =
+    liste.keys.filter(
+      key => /^debit_\d{4}-\d{2}-\d{2}T/.test(key.name)
+    );
 
-  if (!liste.keys || liste.keys.length === 0) {
-    return pageVide();
-  }
+if (!clesDebit || clesDebit.length === 0) {
+  return pageVide();
+}
 
-  const cles =
-    liste.keys
-      .map(key => key.name)
-      .sort()
-      .reverse();
+const cles =
+  clesDebit
+    .map(key => key.name)
+    .sort()
+    .reverse();
 
   const derniereCle = cles[0];
 

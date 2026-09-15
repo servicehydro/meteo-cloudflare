@@ -47,15 +47,31 @@ export default {
 
     try {
 
-      return new Response(
-        await afficherPage(env),
-        {
-          headers: {
-            "content-type":
-              "text/html; charset=UTF-8"
-          }
-        }
-      );
+const liste = await env[
+  "HYDRO-CHARTDATA"
+].list({
+  prefix: "debit_"
+});
+
+const cles = liste.keys
+  .map(key => key.name)
+  .sort()
+  .reverse();
+
+const derniereCle = cles[0];
+
+const texte = await env[
+  "HYDRO-CHARTDATA"
+].get(derniereCle);
+
+return new Response(
+  texte || "Aucune mesure",
+  {
+    headers: {
+      "content-type": "application/json;charset=UTF-8"
+    }
+  }
+);
 
     } catch (error) {
 

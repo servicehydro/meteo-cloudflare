@@ -656,7 +656,42 @@ async function collecteEtStockage(env) {
     )
 
   );
+    // --------------------------------------------------
+  // HISTORIQUE DÉBIT 30 JOURS
+  // --------------------------------------------------
 
+  let historiqueDebit =
+    await env["HYDRO-CHARTDATA"].get(
+      "debit_history",
+      "json"
+    );
+
+  if (!Array.isArray(historiqueDebit)) {
+    historiqueDebit = [];
+  }
+
+  historiqueDebit.push({
+    t: heure.toISOString(),
+    debit: total
+  });
+
+  const limiteDebit =
+    heure.getTime() -
+    30 * 24 * 60 * 60 * 1000;
+
+  historiqueDebit =
+    historiqueDebit
+      .filter(
+        m =>
+          new Date(m.t).getTime() >= limiteDebit
+      )
+      .slice(-720);
+
+  await env["HYDRO-CHARTDATA"].put(
+    "debit_history",
+    JSON.stringify(historiqueDebit)
+  );
+  
 }
 
 
@@ -781,10 +816,21 @@ async function afficherPage(env) {
       )
     }));
   }
+    const historiqueDebit =
+    await env["HYDRO-CHARTDATA"].get(
+      "debit_history",
+      "json"
+    );
+
+  const debitGraph =
+    Array.isArray(historiqueDebit)
+      ? historiqueDebit
+      : [];
   
   return pageAvecMesure(
     mesure,
-    radar
+    radar,
+    debitGraph
   );
 
 }
@@ -871,7 +917,7 @@ Aucune mesure enregistrée.
 // PAGE PRINCIPALE
 // ==================================================
 
-function pageAvecMesure(mesure,radar) {
+function pageAvecMesure(mesure,radar,debitGraph) {
 
   const montereau =
     mesure.montereau || {};

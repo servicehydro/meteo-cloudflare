@@ -1,1 +1,23 @@
+{
+  "name": "meteo",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-15",
 
+  "triggers": {
+    "crons": [
+      "0 * * * *",
+      "*/5 * * * *"
+    ]
+  },
+
+  "kv_namespaces": [
+    {
+      "binding": "HYDRO-CHARTDATA",
+      "id": "0b77f02fdc4e48f180b35b7532f1143b"
+    },
+    {
+      "binding": "RADAR_KV",
+      "id": "0b77f02fdc4e48f180b35b7532f1143b"
+    }
+  ]
+}

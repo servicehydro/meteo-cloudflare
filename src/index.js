@@ -43,7 +43,7 @@ export default {
   // PAGE WEB
   // ==================================================
 
-  async fetch(request, env) {
+async fetch(request, env) {
 
   try {
 
@@ -71,25 +71,6 @@ export default {
 
   }
 }
-
-     catch (error) {
-
-      return new Response(
-        `Erreur Worker : ${error.message}`,
-        {
-          status: 500,
-          headers: {
-            "content-type":
-              "text/plain; charset=UTF-8"
-          }
-        }
-      );
-
-    }
-
-  }
-
-};
 
 
 // ==================================================

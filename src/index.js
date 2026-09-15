@@ -1,15 +1,17 @@
 import h5wasm from "h5wasm";
 
 const RADAR_POINTS = [
-  { nom: "Montargis", ligne: 1312, colonne: 1638 },
-  { nom: "Nemours", ligne: 1254, colonne: 1630 },
-  { nom: "Château-Landon", ligne: 1279, colonne: 1632 },
-  { nom: "Auxerre", ligne: 1349, colonne: 1763 },
-  { nom: "Joigny", ligne: 1310, colonne: 1736 },
-  { nom: "Pont-sur-Yonne", ligne: 1246, colonne: 1704 },
-  { nom: "Nogent-sur-Seine", ligne: 1199, colonne: 1743 },
-  { nom: "Montereau", ligne: 1344, colonne: 1616 },
-  { nom: "Chartrettes", ligne: 1206, colonne: 1628 }
+  { nom: "Montargis", bassin: "Loing", position: "Amont", ligne: 1312, colonne: 1638 },
+  { nom: "Nemours", bassin: "Loing", position: "Médian", ligne: 1254, colonne: 1630 },
+  { nom: "Château-Landon", bassin: "Loing", position: "Aval", ligne: 1279, colonne: 1632 },
+
+  { nom: "Auxerre", bassin: "Yonne", position: "Amont", ligne: 1349, colonne: 1763 },
+  { nom: "Joigny", bassin: "Yonne", position: "Médian", ligne: 1310, colonne: 1736 },
+  { nom: "Pont-sur-Yonne", bassin: "Yonne", position: "Aval", ligne: 1246, colonne: 1704 },
+
+  { nom: "Nogent-sur-Seine", bassin: "Seine", position: "Amont", ligne: 1199, colonne: 1743 },
+  { nom: "Montereau", bassin: "Seine", position: "Médian", ligne: 1344, colonne: 1616 },
+  { nom: "Chartrettes", bassin: "Seine", position: "Aval", ligne: 1206, colonne: 1628 }
 ];
 
 
@@ -770,6 +772,8 @@ async function afficherPage(env) {
 
     radar = RADAR_POINTS.map((point, i) => ({
       nom: point.nom,
+      bassin: point.bassin,
+      position: point.position,
       ...calculerCumuls(
         historiqueRadar,
         i,
@@ -1896,6 +1900,8 @@ Précipitations cumulées radar
 <table>
 
 <tr>
+<th>Bassin</th>
+<th>Position</th>
 <th>Point</th>
 <th>12 h</th>
 <th>24 h</th>
@@ -1906,14 +1912,16 @@ Précipitations cumulées radar
 
 ${
   radar.map(point => `
-    <tr>
-      <td>${point.nom}</td>
-      <td>${point["12 h"]?.toFixed(1) ?? "—"} mm</td>
-      <td>${point["24 h"]?.toFixed(1) ?? "—"} mm</td>
-      <td>${point["2 j"]?.toFixed(1) ?? "—"} mm</td>
-      <td>${point["6 j"]?.toFixed(1) ?? "—"} mm</td>
-      <td>${point["15 j"]?.toFixed(1) ?? "—"} mm</td>
-    </tr>
+  <tr>
+    <td>${point.bassin}</td>
+    <td>${point.position}</td>
+    <td>${point.nom}</td>
+    <td>${point["12 h"]?.toFixed(1) ?? "—"} mm</td>
+    <td>${point["24 h"]?.toFixed(1) ?? "—"} mm</td>
+    <td>${point["2 j"]?.toFixed(1) ?? "—"} mm</td>
+    <td>${point["6 j"]?.toFixed(1) ?? "—"} mm</td>
+    <td>${point["15 j"]?.toFixed(1) ?? "—"} mm</td>
+  </tr>
   `).join("")
 }
 

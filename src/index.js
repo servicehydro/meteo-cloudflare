@@ -929,7 +929,9 @@ function pageAvecMesure(mesure,radar,debitGraph) {
     Number(
       mesure.total || 0
     );
-
+  console.log("DEBUG MESURE", JSON.stringify(mesure));
+console.log("DEBUG TOTAL", total);
+console.log("DEBUG SGL", JSON.stringify(mesure.sgl));
 
   const sgl =
     mesure.sgl || null;

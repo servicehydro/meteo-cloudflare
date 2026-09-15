@@ -732,57 +732,44 @@ function calculerCumuls(historique, index, maintenant) {
 async function afficherPage(env) {
 
   const liste =
-    await env[
-      "HYDRO-CHARTDATA"
-    ].list({
-
-      prefix:
-        "debit_"
-
+    await env["HYDRO-CHARTDATA"].list({
+      prefix: "debit_"
     });
 
-
-  if (
-    !liste.keys ||
-    liste.keys.length === 0
-  ) {
-
+  if (!liste.keys || liste.keys.length === 0) {
     return pageVide();
-
   }
-
 
   const cles =
     liste.keys
-      .map(
-        key =>
-          key.name
-      )
+      .map(key => key.name)
       .sort()
       .reverse();
 
-
-  const derniereCle =
-    cles[0];
-
+  const derniereCle = cles[0];
 
   const texte =
-    await env[
-      "HYDRO-CHARTDATA"
-    ].get(
+    await env["HYDRO-CHARTDATA"].get(
       derniereCle
     );
 
-
   if (!texte) {
-
     return pageVide();
-
   }
 
+  const mesure = JSON.parse(texte);
 
-  const mesure =
-    JSON.parse(texte);
+  // Vérification interne
+  if (
+    !mesure.montereau ||
+    !mesure.episy ||
+    !Number.isFinite(Number(mesure.total)) ||
+    !mesure.sgl
+  ) {
+    throw new Error(
+      "Structure de mesure débit/SGL invalide"
+    );
+  }
 
 
   const historiqueRadar =

@@ -45,33 +45,32 @@ export default {
 
   async fetch(request, env) {
 
-    try {
+  try {
 
-const liste = await env[
-  "HYDRO-CHARTDATA"
-].list({
-  prefix: "debit_"
-});
+    return new Response(
+      await afficherPage(env),
+      {
+        headers: {
+          "content-type":
+            "text/html; charset=UTF-8"
+        }
+      }
+    );
 
-const cles = liste.keys
-  .map(key => key.name)
-  .sort()
-  .reverse();
+  } catch (error) {
 
-const derniereCle = cles[0];
+    return new Response(
+      `Erreur Worker : ${error.message}`,
+      {
+        status: 500,
+        headers: {
+          "content-type":
+            "text/plain; charset=UTF-8"
+      }
+    );
 
-const texte = await env[
-  "HYDRO-CHARTDATA"
-].get(derniereCle);
-
-return new Response(
-  texte || "Aucune mesure",
-  {
-    headers: {
-      "content-type": "application/json;charset=UTF-8"
-    }
   }
-);
+}
 
     } catch (error) {
 

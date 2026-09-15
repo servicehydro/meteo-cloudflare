@@ -72,7 +72,7 @@ export default {
   }
 }
 
-    } catch (error) {
+     catch (error) {
 
       return new Response(
         `Erreur Worker : ${error.message}`,

@@ -661,7 +661,38 @@ async function collecteEtStockage(env) {
 // ==================================================
 // AFFICHAGE
 // ==================================================
+function calculerCumuls(historique, index, maintenant) {
 
+  const periodes = {
+    "12 h": 12 * 60 * 60 * 1000,
+    "24 h": 24 * 60 * 60 * 1000,
+    "2 j": 2 * 24 * 60 * 60 * 1000,
+    "6 j": 6 * 24 * 60 * 60 * 1000,
+    "15 j": 15 * 24 * 60 * 60 * 1000
+  };
+
+  const result = {};
+
+  for (const [nom, duree] of Object.entries(periodes)) {
+
+    const limite = maintenant - duree;
+    let somme = 0;
+
+    for (const mesure of historique) {
+
+      const t = new Date(mesure.t).getTime();
+
+      if (t > limite && t <= maintenant) {
+        somme += Number(mesure.p[index] || 0);
+      }
+    }
+
+    result[nom] =
+      Math.round(somme * 100) / 100;
+  }
+
+  return result;
+}
 async function afficherPage(env) {
 
   const liste =
@@ -718,8 +749,38 @@ async function afficherPage(env) {
     JSON.parse(texte);
 
 
+  const historiqueRadar =
+    await env.RADAR_KV.get(
+      "radar_history",
+      "json"
+    );
+
+  let radar = [];
+
+  if (Array.isArray(historiqueRadar) &&
+      historiqueRadar.length > 0) {
+
+    const derniere =
+      historiqueRadar[
+        historiqueRadar.length - 1
+      ];
+
+    const maintenant =
+      new Date(derniere.t).getTime();
+
+    radar = RADAR_POINTS.map((point, i) => ({
+      nom: point.nom,
+      ...calculerCumuls(
+        historiqueRadar,
+        i,
+        maintenant
+      )
+    }));
+  }
+  
   return pageAvecMesure(
-    mesure
+    mesure,
+    radar
   );
 
 }
@@ -806,7 +867,7 @@ Aucune mesure enregistrée.
 // PAGE PRINCIPALE
 // ==================================================
 
-function pageAvecMesure(mesure) {
+function pageAvecMesure(mesure,radar) {
 
   const montereau =
     mesure.montereau || {};
@@ -1832,13 +1893,31 @@ Graphe à venir
 Précipitations cumulées radar
 </h2>
 
+<table>
 
-<div class="placeholder">
+<tr>
+<th>Point</th>
+<th>12 h</th>
+<th>24 h</th>
+<th>2 j</th>
+<th>6 j</th>
+<th>15 j</th>
+</tr>
 
-Données à venir
+${
+  radar.map(point => `
+    <tr>
+      <td>${point.nom}</td>
+      <td>${point["12 h"]?.toFixed(1) ?? "—"} mm</td>
+      <td>${point["24 h"]?.toFixed(1) ?? "—"} mm</td>
+      <td>${point["2 j"]?.toFixed(1) ?? "—"} mm</td>
+      <td>${point["6 j"]?.toFixed(1) ?? "—"} mm</td>
+      <td>${point["15 j"]?.toFixed(1) ?? "—"} mm</td>
+    </tr>
+  `).join("")
+}
 
-</div>
-
+</table>
 
 </div>
 

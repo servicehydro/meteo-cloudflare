@@ -2292,26 +2292,67 @@ tooltip.innerHTML =
       "Débit : " + Number(p.debit).toFixed(1) + " m³/s";
 
     const rect =
-      svg.getBoundingClientRect();
+  svg.getBoundingClientRect();
 
-    const ratioX =
-      x / largeur;
+const px =
+  (x / largeur) * rect.width;
 
-    const ratioY =
-      y / hauteur;
+const py =
+  (y / hauteur) * rect.height;
 
-    tooltip.style.left =
-      (
-        ratioX * rect.width
-      ) + "px";
+const marge = 10;
 
-    tooltip.style.top =
-      (
-        ratioY * rect.height - 55
-      ) + "px";
+// Affichage temporaire pour connaître la taille réelle
+tooltip.style.display = "block";
+tooltip.style.left = "0px";
+tooltip.style.top = "0px";
 
-    tooltip.style.display =
-      "block";
+const tw = tooltip.offsetWidth;
+const th = tooltip.offsetHeight;
+
+let left;
+let top;
+
+// Position horizontale
+if (px + tw + marge <= rect.width) {
+  // À droite du point
+  left = px + marge;
+} else {
+  // À gauche du point
+  left = px - tw - marge;
+}
+
+// Position verticale
+if (py - th - marge >= 0) {
+  // Au-dessus du point
+  top = py - th - marge;
+} else {
+  // Sous le point
+  top = py + marge;
+}
+
+// Sécurité supplémentaire
+left = Math.max(
+  2,
+  Math.min(
+    left,
+    rect.width - tw - 2
+  )
+);
+
+top = Math.max(
+  2,
+  Math.min(
+    top,
+    rect.height - th - 2
+  )
+);
+
+tooltip.style.left =
+  left + "px";
+
+tooltip.style.top =
+  top + "px";
   }
 
   function masquer() {

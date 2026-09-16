@@ -2287,9 +2287,9 @@ ${(() => {
           }
         );
 
-    tooltip.innerHTML =
-      `<strong>${date}</strong><br>` +
-      `Débit : ${Number(p.debit).toFixed(1)} m³/s`;
+tooltip.innerHTML =
+      "<strong>" + date + "</strong><br>" +
+      "Débit : " + Number(p.debit).toFixed(1) + " m³/s";
 
     const rect =
       svg.getBoundingClientRect();

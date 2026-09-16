@@ -1919,6 +1919,14 @@ ${blocSGL}
 Débit — 30 derniers jours
 </h2>
 
+<div
+  style="
+    position:relative;
+    width:100%;
+    height:260px;
+  "
+>
+
 <svg
   id="debitGraph"
   viewBox="0 0 800 260"
@@ -1950,7 +1958,7 @@ ${(() => {
   const largeur = 800;
   const hauteur = 260;
 
-  const margeGauche = 50;
+  const margeGauche = 55;
   const margeDroite = 15;
   const margeHaut = 15;
   const margeBas = 30;
@@ -1960,7 +1968,6 @@ ${(() => {
 
   const graphH =
     hauteur - margeHaut - margeBas;
-
 
   const valeurs =
     debitGraph.map(
@@ -1978,7 +1985,6 @@ ${(() => {
       maxDebit - minDebit,
       1
     );
-
 
   const points =
     debitGraph.map((p, i) => {
@@ -2001,10 +2007,10 @@ ${(() => {
 
     }).join(" ");
 
-
   return `
 
     <!-- axe vertical -->
+
     <line
       x1="${margeGauche}"
       y1="${margeHaut}"
@@ -2014,6 +2020,7 @@ ${(() => {
     />
 
     <!-- axe horizontal -->
+
     <line
       x1="${margeGauche}"
       y1="${margeHaut + graphH}"
@@ -2022,7 +2029,8 @@ ${(() => {
       stroke="#999"
     />
 
-    <!-- valeur min -->
+    <!-- minimum -->
+
     <text
       x="${margeGauche - 8}"
       y="${margeHaut + graphH}"
@@ -2034,7 +2042,8 @@ ${(() => {
       ${minDebit.toFixed(0)}
     </text>
 
-    <!-- valeur max -->
+    <!-- maximum -->
+
     <text
       x="${margeGauche - 8}"
       y="${margeHaut}"
@@ -2047,14 +2056,53 @@ ${(() => {
     </text>
 
     <!-- courbe -->
+
     <polyline
+      id="debitCurve"
       points="${points}"
       fill="none"
       stroke="#1976d2"
-      stroke-width="2"
+      stroke-width="1.5"
+    />
+
+    <!-- zone interactive -->
+
+    <rect
+      id="debitHitbox"
+      x="${margeGauche}"
+      y="${margeHaut}"
+      width="${graphW}"
+      height="${graphH}"
+      fill="transparent"
+      style="cursor:crosshair"
+    />
+
+    <!-- repère vertical -->
+
+    <line
+      id="debitGuide"
+      x1="0"
+      y1="${margeHaut}"
+      x2="0"
+      y2="${margeHaut + graphH}"
+      stroke="#999"
+      stroke-dasharray="4 4"
+      visibility="hidden"
+    />
+
+    <!-- point sélectionné -->
+
+    <circle
+      id="debitPoint"
+      cx="0"
+      cy="0"
+      r="4"
+      fill="#1976d2"
+      visibility="hidden"
     />
 
     <!-- date début -->
+
     <text
       x="${margeGauche}"
       y="${hauteur - 8}"
@@ -2063,12 +2111,11 @@ ${(() => {
     >
       ${new Date(
         debitGraph[0].t
-      ).toLocaleDateString(
-        "fr-FR"
-      )}
+      ).toLocaleDateString("fr-FR")}
     </text>
 
     <!-- date fin -->
+
     <text
       x="${largeur - margeDroite}"
       y="${hauteur - 8}"
@@ -2080,9 +2127,7 @@ ${(() => {
         debitGraph[
           debitGraph.length - 1
         ].t
-      ).toLocaleDateString(
-        "fr-FR"
-      )}
+      ).toLocaleDateString("fr-FR")}
     </text>
 
   `;
@@ -2091,8 +2136,266 @@ ${(() => {
 
 </svg>
 
+<div
+  id="debitTooltip"
+  style="
+    position:absolute;
+    display:none;
+    pointer-events:none;
+    background:white;
+    border:1px solid #ccc;
+    border-radius:5px;
+    padding:7px 9px;
+    font-size:12px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.15);
+    white-space:nowrap;
+    z-index:10;
+  "
+></div>
+
 </div>
 
+<script>
+
+(() => {
+
+  const data = ${JSON.stringify(debitGraph)};
+
+  const svg =
+    document.getElementById("debitGraph");
+
+  const hitbox =
+    document.getElementById("debitHitbox");
+
+  const point =
+    document.getElementById("debitPoint");
+
+  const guide =
+    document.getElementById("debitGuide");
+
+  const tooltip =
+    document.getElementById("debitTooltip");
+
+  if (!svg || !hitbox || !data.length) {
+    return;
+  }
+
+  const largeur = 800;
+  const hauteur = 260;
+
+  const margeGauche = 55;
+  const margeDroite = 15;
+  const margeHaut = 15;
+  const margeBas = 30;
+
+  const graphW =
+    largeur - margeGauche - margeDroite;
+
+  const graphH =
+    hauteur - margeHaut - margeBas;
+
+  const valeurs =
+    data.map(
+      p => Number(p.debit)
+    );
+
+  const minDebit =
+    Math.min(...valeurs);
+
+  const maxDebit =
+    Math.max(...valeurs);
+
+  const amplitude =
+    Math.max(
+      maxDebit - minDebit,
+      1
+    );
+
+  function trouverPoint(x) {
+
+    let index =
+      Math.round(
+        (
+          x - margeGauche
+        ) /
+        graphW *
+        (data.length - 1)
+      );
+
+    index =
+      Math.max(
+        0,
+        Math.min(
+          data.length - 1,
+          index
+        )
+      );
+
+    return index;
+  }
+
+  function afficher(index) {
+
+    const p = data[index];
+
+    const x =
+      margeGauche +
+      (
+        index /
+        (data.length - 1)
+      ) *
+      graphW;
+
+    const y =
+      margeHaut +
+      graphH -
+      (
+        (
+          Number(p.debit) -
+          minDebit
+        ) /
+        amplitude
+      ) *
+      graphH;
+
+    point.setAttribute("cx", x);
+    point.setAttribute("cy", y);
+
+    guide.setAttribute("x1", x);
+    guide.setAttribute("x2", x);
+
+    point.setAttribute(
+      "visibility",
+      "visible"
+    );
+
+    guide.setAttribute(
+      "visibility",
+      "visible"
+    );
+
+    const date =
+      new Date(p.t)
+        .toLocaleString(
+          "fr-FR",
+          {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          }
+        );
+
+    tooltip.innerHTML =
+      `<strong>${date}</strong><br>` +
+      `Débit : ${Number(p.debit).toFixed(1)} m³/s`;
+
+    const rect =
+      svg.getBoundingClientRect();
+
+    const ratioX =
+      x / largeur;
+
+    const ratioY =
+      y / hauteur;
+
+    tooltip.style.left =
+      (
+        ratioX * rect.width
+      ) + "px";
+
+    tooltip.style.top =
+      (
+        ratioY * rect.height - 55
+      ) + "px";
+
+    tooltip.style.display =
+      "block";
+  }
+
+  function masquer() {
+
+    point.setAttribute(
+      "visibility",
+      "hidden"
+    );
+
+    guide.setAttribute(
+      "visibility",
+      "hidden"
+    );
+
+    tooltip.style.display =
+      "none";
+  }
+
+  function positionDepuisEvenement(event) {
+
+    const rect =
+      svg.getBoundingClientRect();
+
+    const x =
+      (
+        event.clientX -
+        rect.left
+      ) /
+      rect.width *
+      largeur;
+
+    afficher(
+      trouverPoint(x)
+    );
+  }
+
+  hitbox.addEventListener(
+    "mousemove",
+    positionDepuisEvenement
+  );
+
+  hitbox.addEventListener(
+    "mouseleave",
+    masquer
+  );
+
+  hitbox.addEventListener(
+    "touchstart",
+    event => {
+
+      event.preventDefault();
+
+      positionDepuisEvenement(
+        event.touches[0]
+      );
+
+    },
+    { passive:false }
+  );
+
+  hitbox.addEventListener(
+    "touchmove",
+    event => {
+
+      event.preventDefault();
+
+      positionDepuisEvenement(
+        event.touches[0]
+      );
+
+    },
+    { passive:false }
+  );
+
+  hitbox.addEventListener(
+    "touchend",
+    masquer
+  );
+
+})();
+
+</script>
+
+</div>
 
 <!-- PRÉCIPITATIONS -->
 

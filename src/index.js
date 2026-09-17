@@ -484,33 +484,24 @@ async function collectePrevisionsAROME(env) {
   // --------------------------------------------------
   // 8. Stockage
   // --------------------------------------------------
-console.log(
-  "AROME OK",
-  dernier.run,
-  echeance,
-  points
-);
+
+  console.log(
+    "AROME OK",
+    dernier.run,
+    echeance,
+    points
+  );
+
   await env.RADAR_KV.put(
     "forecast_rain",
     JSON.stringify({
-
-      updated:
-        new Date().toISOString(),
-
-      modele:
-        "AROME",
-
-      run:
-        dernier.run,
-
-      echeance_48h:
-        echeance,
-
-      points
-
+      updated: new Date().toISOString(),
+      modele: "AROME",
+      run: dernier.run,
+      echeance_48h: echeance,
+      points: points
     })
   );
-
 }
 
 // ==================================================

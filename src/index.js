@@ -121,39 +121,57 @@ export default {
 
     const url = new URL(request.url);
 
-    if (url.pathname === "/test-sgl") {
+if (url.pathname === "/test-sgl") {
 
-      try {
+  const points = [
+    "Aube5",
+    "Aube6",
+    "Aube7",
+    "Aube10",
+    "Seine7",
+    "Pann3",
+    "Pann8"
+  ];
 
-        const resultat =
-          await getSGL("Aube5");
+  const resultats =
+    await Promise.all(
+      points.map(async point => {
 
-        return new Response(
-          JSON.stringify(resultat),
-          {
-            headers: {
-              "content-type":
-                "application/json; charset=UTF-8"
-            }
-          }
-        );
+        try {
 
-      } catch (error) {
+          const mesure =
+            await getSGL(point);
 
-        return new Response(
-          "ERREUR : " + error.message,
-          {
-            status: 500,
-            headers: {
-              "content-type":
-                "text/plain; charset=UTF-8"
-            }
-          }
-        );
+          return {
+            point: point,
+            ok: true,
+            mesure: mesure
+          };
 
+        } catch (error) {
+
+          return {
+            point: point,
+            ok: false,
+            erreur: error.message
+          };
+
+        }
+
+      })
+    );
+
+  return new Response(
+    JSON.stringify(resultats, null, 2),
+    {
+      headers: {
+        "content-type":
+          "application/json; charset=UTF-8"
       }
-
     }
+  );
+
+}
 
     try {
 

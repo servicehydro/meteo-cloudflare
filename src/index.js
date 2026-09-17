@@ -96,26 +96,36 @@ const FORECAST_POINTS =
 // ==================================================
 export default {
 
-  async scheduled(event, env, ctx) {
+  aasync scheduled(event, env, ctx) {
 
-    let job;
+  let job;
 
-    if (event.cron === "*/5 * * * *") {
-      job = collecteRadar(env);
-    } else {
-      job = collecteEtStockage(env);
-    }
+  if (event.cron === "*/5 * * * *") {
 
-    ctx.waitUntil(
-      job.catch(error => {
-        console.error(
-          "Erreur Cron :",
-          error.message
-        );
-      })
-    );
+    console.log("CRON RADAR");
 
-  },
+    job = collecteRadar(env);
+
+  } else {
+
+    console.log("CRON COLLECTE");
+
+    job = collecteEtStockage(env);
+
+  }
+
+  ctx.waitUntil(
+    job.catch(error => {
+
+      console.error(
+        "Erreur Cron :",
+        error.message
+      );
+
+    })
+  );
+
+}
 
   async fetch(request, env) {
 

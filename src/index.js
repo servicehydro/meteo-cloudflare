@@ -243,6 +243,10 @@ async function collectePrevisionsAROME(env) {
   // --------------------------------------------------
 
   const capResponse = await fetch(
+    console.log(
+  "AROME GetCapabilities",
+  capResponse.status
+);
     BASE +
     "/GetCapabilities" +
     "?service=WCS&version=2.0.1&language=fre",
@@ -480,7 +484,12 @@ async function collectePrevisionsAROME(env) {
   // --------------------------------------------------
   // 8. Stockage
   // --------------------------------------------------
-
+console.log(
+  "AROME OK",
+  dernier.run,
+  echeance,
+  points
+);
   await env.RADAR_KV.put(
     "forecast_rain",
     JSON.stringify({

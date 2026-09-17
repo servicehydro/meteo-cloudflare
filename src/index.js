@@ -969,7 +969,24 @@ async function collecteEtStockage(env) {
     "debit_history",
     JSON.stringify(historiqueDebit)
   );
-  
+    console.log("AVANT AROME");
+
+  try {
+
+    console.log("AROME START");
+
+    await collectePrevisionsAROME(env);
+
+    console.log("AROME FIN");
+
+  } catch (error) {
+
+    console.log(
+      "ERREUR AROME",
+      error.message
+    );
+
+  }
 }
 
 

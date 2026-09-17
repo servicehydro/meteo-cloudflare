@@ -117,7 +117,6 @@ async scheduled(event, env, ctx) {
 
 },
 
-  async fetch(request, env) {
 async fetch(request, env) {
 
   const url = new URL(request.url);
@@ -156,37 +155,34 @@ async fetch(request, env) {
 
   }
 
-  // ton code fetch actuel continue ici...
-    try {
+  try {
 
-      return new Response(
-        await afficherPage(env),
-        {
-          headers: {
-            "content-type":
-              "text/html; charset=UTF-8"
-          }
+    return new Response(
+      await afficherPage(env),
+      {
+        headers: {
+          "content-type":
+            "text/html; charset=UTF-8"
         }
-      );
+      }
+    );
 
-    } catch (error) {
+  } catch (error) {
 
-      return new Response(
-        `Erreur Worker : ${error.message}`,
-        {
-          status: 500,
-          headers: {
-            "content-type":
-              "text/plain; charset=UTF-8"
-          }
+    return new Response(
+      `Erreur Worker : ${error.message}`,
+      {
+        status: 500,
+        headers: {
+          "content-type":
+            "text/plain; charset=UTF-8"
         }
-      );
-
-    }
+      }
+    );
 
   }
 
-};
+},
 
 
 // ==================================================

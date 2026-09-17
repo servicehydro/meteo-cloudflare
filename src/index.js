@@ -825,73 +825,88 @@ async function getDebit(station) {
 
 async function getSGL(idPoint) {
 
-  const query =
-    `?where=id_spot%3D%27${encodeURIComponent(idPoint)}%27` +
+  const ids = [
+    "Aube5",
+    "Aube6",
+    "Aube7",
+    "Aube10",
+    "Seine7",
+    "Pann3",
+    "Pann8"
+  ];
+
+  const where =
+    ids
+      .map(id => `'${id}'`)
+      .join(",");
+
+  const url =
+    `https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/FeatureServer/56/query` +
+    `?where=id_spot%20IN%20(${encodeURIComponent(where)})` +
     `&outFields=objectid,id_spot,date,valeur` +
     `&orderByFields=date%20DESC` +
-    `&resultRecordCount=1` +
+    `&resultRecordCount=2000` +
     `&returnGeometry=false` +
     `&f=json`;
 
-  const urls = [
-    `https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/FeatureServer/56/query${query}`,
-    `https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/MapServer/56/query${query}`
-  ];
+  const response =
+    await fetch(url);
 
-  let derniereErreur = null;
-
-  for (const url of urls) {
-
-    try {
-
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        derniereErreur =
-          `SGL HTTP ${response.status} pour ${idPoint}`;
-        continue;
-      }
-
-      const data = await response.json();
-
-      if (
-        !data.features ||
-        data.features.length === 0
-      ) {
-        derniereErreur =
-          `Aucune donnée SGL pour ${idPoint}`;
-        continue;
-      }
-
-      const a =
-        data.features[0].attributes;
-
-      const debit =
-        Number(a.valeur);
-
-      if (!Number.isFinite(debit)) {
-        derniereErreur =
-          `Valeur SGL invalide pour ${idPoint}`;
-        continue;
-      }
-
-      return {
-        id: a.id_spot,
-        debit: debit,
-        date: a.date
-      };
-
-    } catch (error) {
-
-      derniereErreur =
-        `SGL erreur pour ${idPoint} : ${error.message}`;
-
-    }
+  if (!response.ok) {
+    throw new Error(
+      `SGL HTTP ${response.status} pour ${idPoint}`
+    );
   }
 
-  throw new Error(derniereErreur);
-}
+  const data =
+    await response.json();
 
+  if (
+    !data.features ||
+    data.features.length === 0
+  ) {
+    throw new Error(
+      `Aucune donnée SGL pour ${idPoint}`
+    );
+  }
+
+  // On cherche la dernière mesure du point demandé
+  const mesures =
+    data.features
+      .filter(
+        feature =>
+          feature.attributes.id_spot === idPoint
+      )
+      .sort(
+        (a, b) =>
+          Number(b.attributes.date) -
+          Number(a.attributes.date)
+      );
+
+  if (mesures.length === 0) {
+    throw new Error(
+      `Aucune donnée SGL pour ${idPoint}`
+    );
+  }
+
+  const a =
+    mesures[0].attributes;
+
+  const debit =
+    Number(a.valeur);
+
+  if (!Number.isFinite(debit)) {
+    throw new Error(
+      `Valeur SGL invalide pour ${idPoint}`
+    );
+  }
+
+  return {
+    id: a.id_spot,
+    debit: debit,
+    date: a.date
+  };
+}
 // ==================================================
 // COLLECTE VIGICRUES + SGL
 // ==================================================

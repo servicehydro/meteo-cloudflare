@@ -18,8 +18,9 @@
     {
       "binding": "RADAR_KV",
       "id": "0b77f02fdc4e48f180b35b7532f1143b"
-    },
-  ]
+    }
+  ],
+
   "observability": {
     "logs": {
       "enabled": true,
@@ -33,6 +34,4 @@
       "persist": true
     }
   }
-
-
 }

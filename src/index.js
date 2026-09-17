@@ -86,11 +86,21 @@ async function collecteRadar(env) {
     "https://public-api.meteofrance.fr/public/DPRadar/v1/" +
     "mosaiques/METROPOLE/observations/LAME_D_EAU/produit?maille=500";
 
-  const response = await fetch(url, {
-    headers: {
-      apikey: env.METEOFRANCE_API_KEY
-    }
-  });
+console.log(
+  "RADAR API KEY PRESENT",
+  !!env.METEOFRANCE_API_KEY
+);
+
+const response = await fetch(url, {
+  headers: {
+    apikey: env.METEOFRANCE_API_KEY
+  }
+});
+
+console.log(
+  "RADAR HTTP",
+  response.status
+);
 
   if (!response.ok) {
     throw new Error(

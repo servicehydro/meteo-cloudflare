@@ -96,44 +96,73 @@ const FORECAST_POINTS =
 // ==================================================
 export default {
 
-async scheduled(event, env, ctx) {
+  async scheduled(event, env, ctx) {
 
-  let job;
+    let job;
 
-  if (event.cron === "*/5 * * * *") {
-    job = collecteRadar(env);
-  } else {
-    job = collecteEtStockage(env);
-  }
+    if (event.cron === "*/5 * * * *") {
+      job = collecteRadar(env);
+    } else {
+      job = collecteEtStockage(env);
+    }
 
-  ctx.waitUntil(
-    job.catch(error => {
-      console.error(
-        "Erreur Cron :",
-        error.message
-      );
-    })
-  );
+    ctx.waitUntil(
+      job.catch(error => {
+        console.error(
+          "Erreur Cron :",
+          error.message
+        );
+      })
+    );
 
-},
+  },
 
-async fetch(request, env) {
+  async fetch(request, env) {
 
-  const url = new URL(request.url);
+    const url = new URL(request.url);
 
-  if (url.pathname === "/test-sgl") {
+    if (url.pathname === "/test-sgl") {
+
+      try {
+
+        const resultat =
+          await getSGL("Aube5");
+
+        return new Response(
+          JSON.stringify(resultat),
+          {
+            headers: {
+              "content-type":
+                "application/json; charset=UTF-8"
+            }
+          }
+        );
+
+      } catch (error) {
+
+        return new Response(
+          "ERREUR : " + error.message,
+          {
+            status: 500,
+            headers: {
+              "content-type":
+                "text/plain; charset=UTF-8"
+            }
+          }
+        );
+
+      }
+
+    }
 
     try {
 
-      const resultat =
-        await getSGL("Aube5");
-
       return new Response(
-        JSON.stringify(resultat),
+        await afficherPage(env),
         {
           headers: {
             "content-type":
-              "application/json; charset=UTF-8"
+              "text/html; charset=UTF-8"
           }
         }
       );
@@ -141,7 +170,7 @@ async fetch(request, env) {
     } catch (error) {
 
       return new Response(
-        "ERREUR : " + error.message,
+        `Erreur Worker : ${error.message}`,
         {
           status: 500,
           headers: {
@@ -155,34 +184,7 @@ async fetch(request, env) {
 
   }
 
-  try {
-
-    return new Response(
-      await afficherPage(env),
-      {
-        headers: {
-          "content-type":
-            "text/html; charset=UTF-8"
-        }
-      }
-    );
-
-  } catch (error) {
-
-    return new Response(
-      `Erreur Worker : ${error.message}`,
-      {
-        status: 500,
-        headers: {
-          "content-type":
-            "text/plain; charset=UTF-8"
-        }
-      }
-    );
-
-  }
-
-},
+};
 
 
 // ==================================================

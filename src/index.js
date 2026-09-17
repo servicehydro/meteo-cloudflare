@@ -96,24 +96,20 @@ const FORECAST_POINTS =
 // ==================================================
 export default {
 
-  async scheduled(event, env, ctx) {
+async scheduled(event, env, ctx) {
 
-    if (event.cron === "*/5 * * * *") {
-      return;
-    }
+  const job = collecteEtStockage(env);
 
-    const job = collecteEtStockage(env);
+  ctx.waitUntil(
+    job.catch(error => {
+      console.error(
+        "Erreur Cron :",
+        error.message
+      );
+    })
+  );
 
-    ctx.waitUntil(
-      job.catch(error => {
-        console.error(
-          "Erreur Cron :",
-          error.message
-        );
-      })
-    );
-
-  },
+},
 
   async fetch(request, env) {
 

@@ -1,4 +1,10 @@
 import h5wasm from "h5wasm";
+import { fromArrayBuffer } from "geotiff";
+
+
+// ==================================================
+// POINTS RADAR
+// ==================================================
 
 const RADAR_POINTS = [
   {
@@ -88,64 +94,135 @@ const RADAR_POINTS = [
 
 
 // ==================================================
+// POINTS PREVISIONS
+// ==================================================
+
+const FORECAST_POINTS = [
+  {
+    nom: "Montargis",
+    bassin: "Loing",
+    position: "Amont",
+    latitude: 47.9978628,
+    longitude: 2.7310072
+  },
+  {
+    nom: "Nemours",
+    bassin: "Loing",
+    position: "Médian",
+    latitude: 48.2680260,
+    longitude: 2.6953079
+  },
+  {
+    nom: "Château-Landon",
+    bassin: "Loing",
+    position: "Aval",
+    latitude: 48.1496366,
+    longitude: 2.7032718
+  },
+
+  {
+    nom: "Auxerre",
+    bassin: "Yonne",
+    position: "Amont",
+    latitude: 47.7961287,
+    longitude: 3.5705790
+  },
+  {
+    nom: "Joigny",
+    bassin: "Yonne",
+    position: "Médian",
+    latitude: 47.9812486,
+    longitude: 3.3995767
+  },
+  {
+    nom: "Pont-sur-Yonne",
+    bassin: "Yonne",
+    position: "Aval",
+    latitude: 48.2852895,
+    longitude: 3.2045813
+  },
+
+  {
+    nom: "Nogent-sur-Seine",
+    bassin: "Seine",
+    position: "Amont",
+    latitude: 48.4924390,
+    longitude: 3.4978181
+  },
+  {
+    nom: "Montereau",
+    bassin: "Seine",
+    position: "Médian",
+    latitude: 47.8564484,
+    longitude: 2.5717138
+  },
+  {
+    nom: "Chartrettes",
+    bassin: "Seine",
+    position: "Aval",
+    latitude: 48.4881157,
+    longitude: 2.7005289
+  }
+];
+
+
+// ==================================================
 // WORKER
 // ==================================================
 
 export default {
 
-  // ==================================================
-  // CRON
-  // ==================================================
-
   async scheduled(event, env, ctx) {
 
-    if (event.cron === "*/5 * * * *") {
-      ctx.waitUntil(collecteRadar(env));
-      return;
-    }
+    const job =
+      event.cron === "*/5 * * * *"
+        ? collecteRadar(env)
+        : collecteEtStockage(env);
 
     ctx.waitUntil(
-      collecteEtStockage(env)
+      job.catch(error => {
+        console.error(
+          "Erreur Cron :",
+          error.message
+        );
+      })
     );
 
   },
 
 
-  // ==================================================
-  // PAGE WEB
-  // ==================================================
+  async fetch(request, env) {
 
-async fetch(request, env) {
+    try {
 
-  try {
-
-    return new Response(
-      await afficherPage(env),
-      {
-        headers: {
-          "content-type":
-            "text/html; charset=UTF-8"
+      return new Response(
+        await afficherPage(env),
+        {
+          headers: {
+            "content-type":
+              "text/html; charset=UTF-8"
+          }
         }
-      }
-    );
+      );
 
-  } catch (error) {
+    } catch (error) {
 
-    return new Response(
-      `Erreur Worker : ${error.message}`,
-      {
-        status: 500,
-        headers: {
-          "content-type":
-            "text/plain; charset=UTF-8"
+      return new Response(
+        `Erreur Worker : ${error.message}`,
+        {
+          status: 500,
+          headers: {
+            "content-type":
+              "text/plain; charset=UTF-8"
+          }
         }
-      }
-    );
+      );
+
+    }
 
   }
 
-}
-}
+};
 
 
 // ==================================================
@@ -158,58 +235,92 @@ async function collecteRadar(env) {
     "https://public-api.meteofrance.fr/public/DPRadar/v1/" +
     "mosaiques/METROPOLE/observations/LAME_D_EAU/produit?maille=500";
 
-console.log(
-  "RADAR API KEY PRESENT",
-  !!env.METEOFRANCE_API_KEY
-);
 
-const response = await fetch(url, {
-  headers: {
-    apikey: env.METEOFRANCE_API_KEY
-  }
-});
+  console.log(
+    "RADAR API KEY PRESENT",
+    !!env.METEOFRANCE_API_KEY
+  );
 
-console.log(
-  "RADAR HTTP",
-  response.status
-);
+
+  const response =
+    await fetch(
+      url,
+      {
+        headers: {
+          apikey:
+            env.METEOFRANCE_API_KEY
+        }
+      }
+    );
+
+
+  console.log(
+    "RADAR HTTP",
+    response.status
+  );
+
 
   if (!response.ok) {
+
     throw new Error(
-      `Meteo-France ${response.status}: ${await response.text()}`
+      `Meteo-France ${response.status}: ` +
+      await response.text()
     );
+
   }
 
+
   const disposition =
-    response.headers.get("content-disposition") || "";
+    response.headers.get(
+      "content-disposition"
+    ) || "";
+
 
   const match =
-    disposition.match(/(\d{14})/);
+    disposition.match(
+      /(\d{14})/
+    );
+
 
   if (!match) {
+
     throw new Error(
       "Horodatage du produit radar introuvable"
     );
+
   }
 
-  const s = match[1];
+
+  const s =
+    match[1];
+
 
   const timestamp =
-    `${s.substring(0, 4)}-${s.substring(4, 6)}-${s.substring(6, 8)}T` +
-    `${s.substring(8, 10)}:${s.substring(10, 12)}:${s.substring(12, 14)}Z`;
+    `${s.substring(0, 4)}-` +
+    `${s.substring(4, 6)}-` +
+    `${s.substring(6, 8)}T` +
+    `${s.substring(8, 10)}:` +
+    `${s.substring(10, 12)}:` +
+    `${s.substring(12, 14)}Z`;
+
 
   const buffer =
     await response.arrayBuffer();
 
+
   const Module =
     await h5wasm.ready;
 
-  const { FS } = Module;
+
+  const { FS } =
+    Module;
+
 
   FS.writeFile(
     "/radar.h5",
     new Uint8Array(buffer)
   );
+
 
   const file =
     new h5wasm.File(
@@ -217,41 +328,47 @@ console.log(
       "r"
     );
 
+
   const dataset =
     file.get(
       "dataset1/data1/data"
     );
 
+
   const data =
     dataset.value;
+
 
   const cols =
     dataset.shape[1];
 
+
   const pluies =
-    RADAR_POINTS.map(point => {
+    RADAR_POINTS.map(
+      point => {
 
-      const valeurBrute =
-        data[
-          point.ligne * cols +
-          point.colonne
-        ];
+        const valeurBrute =
+          data[
+            point.ligne * cols +
+            point.colonne
+          ];
 
-      if (
-        valeurBrute === 65535 ||
-        valeurBrute === 65534
-      ) {
-        return 0;
+
+        if (
+          valeurBrute === 65535 ||
+          valeurBrute === 65534
+        ) {
+
+          return 0;
+
+        }
+
+
+        return valeurBrute * 0.01;
+
       }
+    );
 
-      return valeurBrute * 0.01;
-
-    });
-
-
-  // --------------------------------------------------
-  // HISTORIQUE RADAR
-  // --------------------------------------------------
 
   let historique =
     await env.RADAR_KV.get(
@@ -259,18 +376,17 @@ console.log(
       "json"
     );
 
+
   if (!Array.isArray(historique)) {
+
     historique = [];
+
   }
 
 
-  // --------------------------------------------------
-  // Éviter les doublons
-  // --------------------------------------------------
-
   if (
     !historique.some(
-      mesure => mesure.t === timestamp
+      m => m.t === timestamp
     )
   ) {
 
@@ -282,26 +398,20 @@ console.log(
   }
 
 
-  // --------------------------------------------------
-  // CONSERVATION 15 JOURS
-  // --------------------------------------------------
-
   const limite =
     new Date(timestamp).getTime() -
     15 * 24 * 60 * 60 * 1000;
 
+
   historique =
     historique
       .filter(
-        mesure =>
-          new Date(mesure.t).getTime() >= limite
+        m =>
+          new Date(m.t).getTime() >=
+          limite
       )
       .slice(-4320);
 
-
-  // --------------------------------------------------
-  // STOCKAGE
-  // --------------------------------------------------
 
   await env.RADAR_KV.put(
     "radar_history",
@@ -310,79 +420,199 @@ console.log(
 
 
   console.log(
-    `Radar ${timestamp} : ${historique.length} mesures`
+    "Radar OK",
+    timestamp,
+    `${historique.length} mesures`
   );
 
 }
+
+
+// ==================================================
+// CUMULS RADAR
+// ==================================================
+
+function calculerCumuls(
+  historique,
+  index,
+  maintenant
+) {
+
+  const periodes = {
+
+    "12 h":
+      12 * 60 * 60 * 1000,
+
+    "24 h":
+      24 * 60 * 60 * 1000,
+
+    "2 j":
+      2 * 24 * 60 * 60 * 1000,
+
+    "6 j":
+      6 * 24 * 60 * 60 * 1000,
+
+    "15 j":
+      15 * 24 * 60 * 60 * 1000
+
+  };
+
+
+  const result = {};
+
+
+  for (
+    const [nom, duree]
+    of Object.entries(periodes)
+  ) {
+
+    const limite =
+      maintenant - duree;
+
+
+    let somme = 0;
+
+
+    for (
+      const mesure
+      of historique
+    ) {
+
+      const t =
+        new Date(mesure.t).getTime();
+
+
+      if (
+        t > limite &&
+        t <= maintenant
+      ) {
+
+        somme +=
+          Number(
+            mesure.p[index] || 0
+          );
+
+      }
+
+    }
+
+
+    result[nom] =
+      Math.round(
+        somme * 100
+      ) / 100;
+
+  }
+
+
+  return result;
+
+}
+
+
+// ==================================================
+// AROME
+// ==================================================
+
 async function collectePrevisionsAROME(env) {
 
   const BASE =
     "https://public-api.meteofrance.fr/public/arome/1.0/wcs/" +
     "MF-NWP-HIGHRES-AROME-001-FRANCE-WCS";
 
+
   // --------------------------------------------------
-  // 1. Catalogue AROME
+  // 1. Catalogue
   // --------------------------------------------------
 
-  const capResponse = await fetch(
-   BASE +
-    "/GetCapabilities" +
-    "?service=WCS&version=2.0.1&language=fre",
-    {
-      headers: {
-        apikey: env.METEOFRANCE_API_KEY
+  const capResponse =
+    await fetch(
+
+      BASE +
+      "/GetCapabilities" +
+      "?service=WCS&version=2.0.1&language=fre",
+
+      {
+        headers: {
+          apikey:
+            env.METEOFRANCE_API_KEY
+        }
       }
-    }
+
+    );
+
+
+  console.log(
+    "AROME GetCapabilities",
+    capResponse.status
   );
- console.log(
-  "AROME GetCapabilities",
-  capResponse.status
-);
+
+
   const catalogue =
     await capResponse.text();
 
+
   if (!capResponse.ok) {
+
     throw new Error(
       `AROME GetCapabilities ${capResponse.status}`
     );
+
   }
 
+
   // --------------------------------------------------
-  // 2. Dernier coverage P2D
+  // 2. Coverage P2D
   // --------------------------------------------------
 
   const regex =
     /<wcs:CoverageId>(TOTAL_WATER_PRECIPITATION__GROUND_OR_WATER_SURFACE___(\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}Z)_P2D)<\/wcs:CoverageId>/g;
 
+
   const couvertures = [];
 
-  for (const match of catalogue.matchAll(regex)) {
+
+  for (
+    const match
+    of catalogue.matchAll(regex)
+  ) {
 
     couvertures.push({
-      coverageId: match[1],
-      run: match[2]
+
+      coverageId:
+        match[1],
+
+      run:
+        match[2]
+
     });
 
   }
 
+
   if (!couvertures.length) {
+
     throw new Error(
       "Aucun coverage AROME P2D disponible"
     );
+
   }
+
 
   couvertures.sort(
     (a, b) =>
       a.run.localeCompare(b.run)
   );
 
+
   const dernier =
     couvertures[
       couvertures.length - 1
     ];
 
+
   // --------------------------------------------------
-  // 3. Échéance +48 h
+  // 3. Echéance +48 h
   // --------------------------------------------------
 
   const runIso =
@@ -391,37 +621,62 @@ async function collectePrevisionsAROME(env) {
       "$1:$2:$3Z"
     );
 
+
   const echeance =
     new Date(
       new Date(runIso).getTime() +
       48 * 60 * 60 * 1000
     )
       .toISOString()
-      .replace(".000Z", "Z");
+      .replace(
+        ".000Z",
+        "Z"
+      );
+
 
   // --------------------------------------------------
-  // 4. Emprise des 9 points
+  // 4. Emprise
   // --------------------------------------------------
 
   const latMin =
     Math.floor(
-      Math.min(...RADAR_POINTS.map(p => p.latitude)) * 100
+      Math.min(
+        ...FORECAST_POINTS.map(
+          p => p.latitude
+        )
+      ) * 100
     ) / 100;
+
 
   const latMax =
     Math.ceil(
-      Math.max(...RADAR_POINTS.map(p => p.latitude)) * 100
+      Math.max(
+        ...FORECAST_POINTS.map(
+          p => p.latitude
+        )
+      ) * 100
     ) / 100;
+
 
   const lonMin =
     Math.floor(
-      Math.min(...RADAR_POINTS.map(p => p.longitude)) * 100
+      Math.min(
+        ...FORECAST_POINTS.map(
+          p => p.longitude
+        )
+      ) * 100
     ) / 100;
+
 
   const lonMax =
     Math.ceil(
-      Math.max(...RADAR_POINTS.map(p => p.longitude)) * 100
+      Math.max(
+        ...FORECAST_POINTS.map(
+          p => p.longitude
+        )
+      ) * 100
     ) / 100;
+
 
   // --------------------------------------------------
   // 5. GetCoverage
@@ -430,141 +685,182 @@ async function collectePrevisionsAROME(env) {
   const params =
     new URLSearchParams();
 
+
   params.set(
     "service",
     "WCS"
   );
+
 
   params.set(
     "version",
     "2.0.1"
   );
 
+
   params.set(
     "coverageid",
     dernier.coverageId
   );
+
 
   params.append(
     "subset",
     `time(${echeance})`
   );
 
+
   params.append(
     "subset",
     `lat(${latMin},${latMax})`
   );
+
 
   params.append(
     "subset",
     `long(${lonMin},${lonMax})`
   );
 
+
   params.set(
     "format",
     "image/tiff"
   );
 
+
   const coverageResponse =
     await fetch(
+
       BASE +
       "/GetCoverage?" +
       params.toString(),
+
       {
         headers: {
           apikey:
             env.METEOFRANCE_API_KEY
         }
       }
+
     );
+
 
   const buffer =
     await coverageResponse.arrayBuffer();
+
 
   if (!coverageResponse.ok) {
 
     throw new Error(
       `AROME GetCoverage ${coverageResponse.status}: ` +
-      new TextDecoder().decode(buffer)
+      new TextDecoder().decode(
+        buffer
+      )
     );
 
   }
 
+
   // --------------------------------------------------
-  // 6. Lecture GeoTIFF
+  // 6. GeoTIFF
   // --------------------------------------------------
 
   const tiff =
-    await fromArrayBuffer(buffer);
+    await fromArrayBuffer(
+      buffer
+    );
+
 
   const image =
     await tiff.getImage();
 
+
   const width =
     image.getWidth();
+
 
   const height =
     image.getHeight();
 
+
   const origin =
     image.getOrigin();
 
+
   const resolution =
     image.getResolution();
+
 
   const raster =
     await image.readRasters({
       interleave: true
     });
 
+
   // --------------------------------------------------
-  // 7. Extraction des 9 points
+  // 7. Extraction
   // --------------------------------------------------
 
   const points =
-    RADAR_POINTS.map(point => {
+    FORECAST_POINTS.map(
+      point => {
 
-      const colonne =
-        Math.floor(
-          (point.longitude - origin[0]) /
-          resolution[0]
-        );
+        const colonne =
+          Math.floor(
+            (
+              point.longitude -
+              origin[0]
+            ) /
+            resolution[0]
+          );
 
-      const ligne =
-        Math.floor(
-          (point.latitude - origin[1]) /
-          resolution[1]
-        );
 
-      const index =
-        ligne * width + colonne;
+        const ligne =
+          Math.floor(
+            (
+              point.latitude -
+              origin[1]
+            ) /
+            resolution[1]
+          );
 
-      const valeur =
-        Number(raster[index]);
 
-      return {
+        const index =
+          ligne * width +
+          colonne;
 
-        nom:
-          point.nom,
 
-        bassin:
-          point.bassin,
+        const valeur =
+          Number(
+            raster[index]
+          );
 
-        position:
-          point.position,
 
-        pluie_mm:
-          Number.isFinite(valeur)
-            ? Math.round(valeur * 10) / 10
-            : null
+        return {
 
-      };
+          nom:
+            point.nom,
 
-    });
+          bassin:
+            point.bassin,
 
-  // --------------------------------------------------
-  // 8. Stockage
-  // --------------------------------------------------
+          position:
+            point.position,
+
+          pluie_mm:
+            Number.isFinite(
+              valeur
+            )
+              ? Math.round(
+                  valeur * 10
+                ) / 10
+              : null
+
+        };
+
+      }
+    );
+
 
   console.log(
     "AROME OK",
@@ -573,17 +869,37 @@ async function collectePrevisionsAROME(env) {
     points
   );
 
+
+  // --------------------------------------------------
+  // 8. Stockage
+  // --------------------------------------------------
+
   await env.RADAR_KV.put(
+
     "forecast_rain",
+
     JSON.stringify({
-      updated: new Date().toISOString(),
-      modele: "AROME",
-      run: dernier.run,
-      echeance_48h: echeance,
-      points: points
+
+      updated:
+        new Date().toISOString(),
+
+      modele:
+        "AROME",
+
+      run:
+        dernier.run,
+
+      echeance_48h:
+        echeance,
+
+      points
+
     })
+
   );
+
 }
+
 
 // ==================================================
 // VIGICRUES
@@ -597,8 +913,10 @@ async function getDebit(station) {
     `&GrdSerie=Q` +
     `&FormatDate=iso`;
 
+
   const response =
     await fetch(url);
+
 
   if (!response.ok) {
 
@@ -608,11 +926,14 @@ async function getDebit(station) {
 
   }
 
+
   const data =
     await response.json();
 
+
   const observations =
     data?.Serie?.ObssHydro;
+
 
   if (
     !Array.isArray(observations) ||
@@ -625,15 +946,19 @@ async function getDebit(station) {
 
   }
 
+
   const derniere =
     observations[
       observations.length - 1
     ];
 
+
   return {
 
     debit:
-      Number(derniere.ResObsHydro),
+      Number(
+        derniere.ResObsHydro
+      ),
 
     dateObservation:
       derniere.DtObsHydro
@@ -658,8 +983,10 @@ async function getSGL(idPoint) {
     `&returnGeometry=false` +
     `&f=json`;
 
+
   const response =
     await fetch(url);
+
 
   if (!response.ok) {
 
@@ -669,8 +996,10 @@ async function getSGL(idPoint) {
 
   }
 
+
   const data =
     await response.json();
+
 
   if (
     !data.features ||
@@ -683,11 +1012,14 @@ async function getSGL(idPoint) {
 
   }
 
+
   const a =
     data.features[0].attributes;
 
+
   const debit =
     Number(a.valeur);
+
 
   if (!Number.isFinite(debit)) {
 
@@ -696,6 +1028,7 @@ async function getSGL(idPoint) {
     );
 
   }
+
 
   return {
 
@@ -714,16 +1047,25 @@ async function getSGL(idPoint) {
 
 
 // ==================================================
-// COLLECTE
+// COLLECTE VIGICRUES + SGL
 // ==================================================
 
 async function collecteEtStockage(env) {
 
+  // --------------------------------------------------
+  // Vigicrues
+  // --------------------------------------------------
+
   const montereau =
-    await getDebit("F400000102");
+    await getDebit(
+      "F400000102"
+    );
+
 
   const episy =
-    await getDebit("F439000101");
+    await getDebit(
+      "F439000101"
+    );
 
 
   const total =
@@ -731,31 +1073,50 @@ async function collecteEtStockage(env) {
     episy.debit;
 
 
+  // --------------------------------------------------
+  // SGL
+  // --------------------------------------------------
+
   const sgl = {
 
     aube: {
+
       aube5: null,
       aube6: null,
       aube7: null,
       aube10: null,
+
       total: 0,
+
       erreurs: []
+
     },
+
 
     seine: {
+
       debit: null,
+
       erreurs: []
+
     },
+
 
     panneciere: {
+
       montigny: null,
       corancy: null,
+
       debitBrut: null,
       debitRelache: null,
+
       erreurs: []
+
     },
 
+
     total: 0,
+
     erreurs: []
 
   };
@@ -766,33 +1127,44 @@ async function collecteEtStockage(env) {
   // --------------------------------------------------
 
   const aubePoints = [
+
     ["aube5", "Aube5"],
     ["aube6", "Aube6"],
     ["aube7", "Aube7"],
     ["aube10", "Aube10"]
+
   ];
 
-  for (const [nom, idPoint] of aubePoints) {
+
+  for (
+    const [nom, idPoint]
+    of aubePoints
+  ) {
 
     try {
 
       const mesure =
         await getSGL(idPoint);
 
+
       sgl.aube[nom] =
         mesure;
 
+
       sgl.aube.total +=
         mesure.debit;
+
 
     } catch (error) {
 
       const message =
         `${idPoint} : ${error.message}`;
 
+
       sgl.aube.erreurs.push(
         message
       );
+
 
       sgl.erreurs.push(
         message
@@ -810,25 +1182,33 @@ async function collecteEtStockage(env) {
   try {
 
     const seine7 =
-      await getSGL("Seine7");
+      await getSGL(
+        "Seine7"
+      );
+
 
     sgl.seine.debit =
       seine7.debit;
 
+
     sgl.seine.observation =
       seine7.date;
 
+
     sgl.seine.mesure =
       seine7;
+
 
   } catch (error) {
 
     const message =
       `Seine7 : ${error.message}`;
 
+
     sgl.seine.erreurs.push(
       message
     );
+
 
     sgl.erreurs.push(
       message
@@ -841,29 +1221,32 @@ async function collecteEtStockage(env) {
   // PANNECIERE
   // --------------------------------------------------
 
-  let pann3 =
-    null;
-
-  let pann8 =
-    null;
+  let pann3 = null;
+  let pann8 = null;
 
 
   try {
 
     pann3 =
-      await getSGL("Pann3");
+      await getSGL(
+        "Pann3"
+      );
+
 
     sgl.panneciere.montigny =
       pann3;
+
 
   } catch (error) {
 
     const message =
       `Pann3 : ${error.message}`;
 
+
     sgl.panneciere.erreurs.push(
       message
     );
+
 
     sgl.erreurs.push(
       message
@@ -875,19 +1258,25 @@ async function collecteEtStockage(env) {
   try {
 
     pann8 =
-      await getSGL("Pann8");
+      await getSGL(
+        "Pann8"
+      );
+
 
     sgl.panneciere.corancy =
       pann8;
+
 
   } catch (error) {
 
     const message =
       `Pann8 : ${error.message}`;
 
+
     sgl.panneciere.erreurs.push(
       message
     );
+
 
     sgl.erreurs.push(
       message
@@ -909,8 +1298,10 @@ async function collecteEtStockage(env) {
       pann3.debit -
       pann8.debit;
 
+
     sgl.panneciere.debitBrut =
       debitPanneciereBrut;
+
 
     sgl.panneciere.debitRelache =
       Math.max(
@@ -938,8 +1329,12 @@ async function collecteEtStockage(env) {
   const maintenant =
     new Date();
 
+
   const heure =
-    new Date(maintenant);
+    new Date(
+      maintenant
+    );
+
 
   heure.setMinutes(
     0,
@@ -961,6 +1356,7 @@ async function collecteEtStockage(env) {
 
     collecte:
       maintenant.toISOString(),
+
 
     montereau: {
 
@@ -986,13 +1382,14 @@ async function collecteEtStockage(env) {
 
     total,
 
+
     sgl
 
   };
 
 
   // --------------------------------------------------
-  // KV
+  // STOCKAGE MESURE
   // --------------------------------------------------
 
   await env[
@@ -1006,50 +1403,99 @@ async function collecteEtStockage(env) {
     )
 
   );
-    // --------------------------------------------------
-  // HISTORIQUE DÉBIT 30 JOURS
+
+
+  // --------------------------------------------------
+  // HISTORIQUE DEBIT 30 JOURS
   // --------------------------------------------------
 
   let historiqueDebit =
-    await env["HYDRO-CHARTDATA"].get(
+    await env[
+      "HYDRO-CHARTDATA"
+    ].get(
       "debit_history",
       "json"
     );
 
-  if (!Array.isArray(historiqueDebit)) {
-    historiqueDebit = [];
+
+  if (
+    !Array.isArray(
+      historiqueDebit
+    )
+  ) {
+
+    historiqueDebit =
+      [];
+
   }
 
+
   historiqueDebit.push({
-    t: heure.toISOString(),
-    debit: total
+
+    t:
+      heure.toISOString(),
+
+    debit:
+      total
+
   });
+
 
   const limiteDebit =
     heure.getTime() -
     30 * 24 * 60 * 60 * 1000;
 
+
   historiqueDebit =
     historiqueDebit
       .filter(
         m =>
-          new Date(m.t).getTime() >= limiteDebit
+          new Date(
+            m.t
+          ).getTime() >=
+          limiteDebit
       )
       .slice(-720);
 
-  await env["HYDRO-CHARTDATA"].put(
+
+  await env[
+    "HYDRO-CHARTDATA"
+  ].put(
+
     "debit_history",
-    JSON.stringify(historiqueDebit)
+
+    JSON.stringify(
+      historiqueDebit
+    )
+
   );
-    console.log("AVANT AROME");
+
+
+  // --------------------------------------------------
+  // AROME
+  // --------------------------------------------------
+
+  console.log(
+    "AVANT AROME"
+  );
+
 
   try {
 
-    console.log("AROME START");
+    console.log(
+      "AROME START"
+    );
 
-    await collectePrevisionsAROME(env);
 
-    console.log("AROME FIN");
+    await collectePrevisionsAROME(
+      env
+    );
+
+
+    console.log(
+      "AROME FIN"
+    );
+
 
   } catch (error) {
 
@@ -1059,91 +1505,82 @@ async function collecteEtStockage(env) {
     );
 
   }
+
 }
 
 
 // ==================================================
 // AFFICHAGE
 // ==================================================
-function calculerCumuls(historique, index, maintenant) {
 
-  const periodes = {
-    "12 h": 12 * 60 * 60 * 1000,
-    "24 h": 24 * 60 * 60 * 1000,
-    "2 j": 2 * 24 * 60 * 60 * 1000,
-    "6 j": 6 * 24 * 60 * 60 * 1000,
-    "15 j": 15 * 24 * 60 * 60 * 1000
-  };
-
-  const result = {};
-
-  for (const [nom, duree] of Object.entries(periodes)) {
-
-    const limite = maintenant - duree;
-    let somme = 0;
-
-    for (const mesure of historique) {
-
-      const t = new Date(mesure.t).getTime();
-
-      if (t > limite && t <= maintenant) {
-        somme += Number(mesure.p[index] || 0);
-      }
-    }
-
-    result[nom] =
-      Math.round(somme * 100) / 100;
-  }
-
-  return result;
-}
 async function afficherPage(env) {
 
   const liste =
-    await env["HYDRO-CHARTDATA"].list({
-      prefix: "debit_"
+    await env[
+      "HYDRO-CHARTDATA"
+    ].list({
+      prefix:
+        "debit_"
     });
-  
+
+
   const clesDebit =
-    liste.keys.filter(
-      key => /^debit_\d{4}-\d{2}-\d{2}T/.test(key.name)
-    );
+    (liste.keys || [])
+      .filter(
+        key =>
+          /^debit_\d{4}-\d{2}-\d{2}T/.test(
+            key.name
+          )
+      );
 
-if (!clesDebit || clesDebit.length === 0) {
-  return pageVide();
-}
 
-const cles =
-  clesDebit
-    .map(key => key.name)
-    .sort()
-    .reverse();
+  if (
+    clesDebit.length === 0
+  ) {
 
-  const derniereCle = cles[0];
+    return pageVide();
+
+  }
+
+
+  const cles =
+    clesDebit
+      .map(
+        key =>
+          key.name
+      )
+      .sort()
+      .reverse();
+
+
+  const derniereCle =
+    cles[0];
+
 
   const texte =
-    await env["HYDRO-CHARTDATA"].get(
+    await env[
+      "HYDRO-CHARTDATA"
+    ].get(
       derniereCle
     );
 
+
   if (!texte) {
+
     return pageVide();
+
   }
 
-  const mesure = JSON.parse(texte);
 
-  // Vérification interne
-  if (
-    !mesure.montereau ||
-    !mesure.episy ||
-    !Number.isFinite(Number(mesure.total)) ||
-    !mesure.sgl
-  ) {
-    throw new Error(
-      "Structure de mesure débit/SGL invalide"
+  const mesure =
+    JSON.parse(
+      texte
     );
-  }
 
+
+  // --------------------------------------------------
+  // RADAR
+  // --------------------------------------------------
 
   const historiqueRadar =
     await env.RADAR_KV.get(
@@ -1151,51 +1588,96 @@ const cles =
       "json"
     );
 
+
   let radar = [];
 
-  if (Array.isArray(historiqueRadar) &&
-      historiqueRadar.length > 0) {
+
+  if (
+    Array.isArray(
+      historiqueRadar
+    ) &&
+    historiqueRadar.length > 0
+  ) {
 
     const derniere =
       historiqueRadar[
         historiqueRadar.length - 1
       ];
 
-    const maintenant =
-      new Date(derniere.t).getTime();
 
-    radar = RADAR_POINTS.map((point, i) => ({
-      nom: point.nom,
-      bassin: point.bassin,
-      position: point.position,
-      ...calculerCumuls(
-        historiqueRadar,
-        i,
-        maintenant
-      )
-    }));
+    const maintenant =
+      new Date(
+        derniere.t
+      ).getTime();
+
+
+    radar =
+      RADAR_POINTS.map(
+        (point, i) => ({
+
+          nom:
+            point.nom,
+
+          bassin:
+            point.bassin,
+
+          position:
+            point.position,
+
+          ...calculerCumuls(
+            historiqueRadar,
+            i,
+            maintenant
+          )
+
+        })
+      );
+
   }
-    const historiqueDebit =
-    await env["HYDRO-CHARTDATA"].get(
+
+
+  // --------------------------------------------------
+  // HISTORIQUE DEBIT
+  // --------------------------------------------------
+
+  const historiqueDebit =
+    await env[
+      "HYDRO-CHARTDATA"
+    ].get(
       "debit_history",
       "json"
     );
 
+
   const debitGraph =
-    Array.isArray(historiqueDebit)
+    Array.isArray(
+      historiqueDebit
+    )
       ? historiqueDebit
       : [];
-    
+
+
+  // --------------------------------------------------
+  // PREVISIONS
+  // --------------------------------------------------
+
   const previsions =
     await env.RADAR_KV.get(
       "forecast_rain",
       "json"
     );
+
+
   return pageAvecMesure(
+
     mesure,
+
     radar,
+
     debitGraph,
+
     previsions
+
   );
 
 }
@@ -1217,37 +1699,44 @@ function pageVide() {
 
 <meta charset="UTF-8">
 
-<title>Hydro Chartrettes</title>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>
+Hydro Chartrettes
+</title>
 
 <style>
 
-html, body {
+html,body{
 
-  margin: 0;
-  width: 100%;
-  height: 100%;
+  margin:0;
+
+  width:100%;
+
+  height:100%;
 
   font-family:
-    Arial, sans-serif;
+    Arial,sans-serif;
 
   background:
     #f3f5f7;
 
 }
 
-body {
+body{
 
-  padding: 12px;
+  padding:12px;
 
 }
 
-.card {
+.card{
 
-  background: white;
+  background:white;
 
-  padding: 20px;
+  padding:20px;
 
-  border-radius: 8px;
+  border-radius:8px;
 
 }
 
@@ -1282,36 +1771,39 @@ Aucune mesure enregistrée.
 // PAGE PRINCIPALE
 // ==================================================
 
-function pageAvecMesure(mesure,radar,debitGraph, previsions) {
+function pageAvecMesure(
+  mesure,
+  radar,
+  debitGraph,
+  previsions
+) {
 
   const montereau =
     mesure.montereau || {};
 
+
   const episy =
     mesure.episy || {};
+
 
   const total =
     Number(
       mesure.total || 0
     );
-  console.log("DEBUG MESURE", JSON.stringify(mesure));
-console.log("DEBUG TOTAL", total);
-console.log("DEBUG SGL", JSON.stringify(mesure.sgl));
+
 
   const sgl =
     mesure.sgl || null;
 
 
   const sglDisponible =
-    sgl &&
-    sgl.aube &&
-    sgl.seine &&
-    sgl.panneciere;
+    !!(
+      sgl &&
+      sgl.aube &&
+      sgl.seine &&
+      sgl.panneciere
+    );
 
-
-  // --------------------------------------------------
-  // DÉCALAGE VIGICRUES
-  // --------------------------------------------------
 
   let decalageMinutes =
     0;
@@ -1327,10 +1819,12 @@ console.log("DEBUG SGL", JSON.stringify(mesure.sgl));
         montereau.observation
       );
 
+
     const dateE =
       new Date(
         episy.observation
       );
+
 
     decalageMinutes =
       Math.abs(
@@ -1346,19 +1840,23 @@ console.log("DEBUG SGL", JSON.stringify(mesure.sgl));
 
 
   // --------------------------------------------------
-  // FORMAT DATE VIGICRUES
+  // FORMAT DATES
   // --------------------------------------------------
 
   function formatDate(date) {
 
     if (!date) {
+
       return "—";
+
     }
+
 
     return new Date(date)
       .toLocaleString(
         "fr-FR",
         {
+
           timeZone:
             "Europe/Paris",
 
@@ -1382,10 +1880,6 @@ console.log("DEBUG SGL", JSON.stringify(mesure.sgl));
 
   }
 
-
-  // --------------------------------------------------
-  // FORMAT DATE SGL
-  // --------------------------------------------------
 
   function formatSGLDate(date) {
 
@@ -1398,12 +1892,14 @@ console.log("DEBUG SGL", JSON.stringify(mesure.sgl));
 
     }
 
+
     return new Date(
       Number(date)
     )
       .toLocaleString(
         "fr-FR",
         {
+
           timeZone:
             "Europe/Paris",
 
@@ -1427,10 +1923,6 @@ console.log("DEBUG SGL", JSON.stringify(mesure.sgl));
 
   }
 
-
-  // --------------------------------------------------
-  // FORMAT DÉBIT
-  // --------------------------------------------------
 
   function formatDebit(value) {
 
@@ -1446,15 +1938,16 @@ console.log("DEBUG SGL", JSON.stringify(mesure.sgl));
 
     }
 
+
     return Number(value)
       .toFixed(1);
 
   }
 
 
-  // --------------------------------------------------
-  // AFFICHAGE SGL
-  // --------------------------------------------------
+  // ==================================================
+  // BLOC SGL
+  // ==================================================
 
   let blocSGL =
     "";
@@ -1491,8 +1984,9 @@ Débit cumulé restitué par SGL
 
 </div>
 
-
-<table style="margin-top:10px">
+<table
+  style="margin-top:10px"
+>
 
 <tr>
 
@@ -1693,9 +2187,7 @@ Seine Grands Lacs
 </h2>
 
 <div class="sgl-total">
-
 —
-
 </div>
 
 <div class="subtitle">
@@ -1711,7 +2203,9 @@ Données SGL non disponibles pour cette mesure.
 <br><br>
 
 Erreur :
-${sgl?.erreur || "erreur inconnue"}
+
+${sgl?.erreur ||
+  "erreur inconnue"}
 
 </div>
 
@@ -1720,9 +2214,393 @@ ${sgl?.erreur || "erreur inconnue"}
   }
 
 
-  // --------------------------------------------------
+  // ==================================================
+  // GRAPHE
+  // ==================================================
+
+  const graph =
+    (() => {
+
+      if (
+        !Array.isArray(
+          debitGraph
+        ) ||
+        debitGraph.length < 2
+      ) {
+
+        return `
+
+<text
+  x="400"
+  y="130"
+  text-anchor="middle"
+  fill="#777"
+  font-size="14"
+>
+
+Données insuffisantes
+
+</text>
+
+`;
+
+      }
+
+
+      const largeur =
+        800;
+
+
+      const hauteur =
+        260;
+
+
+      const margeGauche =
+        55;
+
+
+      const margeDroite =
+        15;
+
+
+      const margeHaut =
+        15;
+
+
+      const margeBas =
+        30;
+
+
+      const graphW =
+        largeur -
+        margeGauche -
+        margeDroite;
+
+
+      const graphH =
+        hauteur -
+        margeHaut -
+        margeBas;
+
+
+      const valeurs =
+        debitGraph.map(
+          p =>
+            Number(
+              p.debit
+            )
+        );
+
+
+      const minDebit =
+        Math.min(
+          ...valeurs
+        );
+
+
+      const maxDebit =
+        Math.max(
+          ...valeurs
+        );
+
+
+      const amplitude =
+        Math.max(
+          maxDebit - minDebit,
+          1
+        );
+
+
+      const points =
+        debitGraph
+          .map(
+            (p, i) => {
+
+              const x =
+                margeGauche +
+                (
+                  i /
+                  (
+                    debitGraph.length -
+                    1
+                  )
+                ) *
+                graphW;
+
+
+              const y =
+                margeHaut +
+                graphH -
+                (
+                  (
+                    Number(p.debit) -
+                    minDebit
+                  ) /
+                  amplitude
+                ) *
+                graphH;
+
+
+              return (
+                `${x.toFixed(1)},` +
+                `${y.toFixed(1)}`
+              );
+
+            }
+          )
+          .join(" ");
+
+
+      return `
+
+<line
+  x1="${margeGauche}"
+  y1="${margeHaut}"
+  x2="${margeGauche}"
+  y2="${margeHaut + graphH}"
+  stroke="#999"
+/>
+
+
+<line
+  x1="${margeGauche}"
+  y1="${margeHaut + graphH}"
+  x2="${margeGauche + graphW}"
+  y2="${margeHaut + graphH}"
+  stroke="#999"
+/>
+
+
+<text
+  x="${margeGauche - 8}"
+  y="${margeHaut + graphH}"
+  text-anchor="end"
+  dominant-baseline="middle"
+  font-size="11"
+  fill="#666"
+>
+
+${minDebit.toFixed(0)}
+
+</text>
+
+
+<text
+  x="${margeGauche - 8}"
+  y="${margeHaut}"
+  text-anchor="end"
+  dominant-baseline="middle"
+  font-size="11"
+  fill="#666"
+>
+
+${maxDebit.toFixed(0)}
+
+</text>
+
+
+<polyline
+  points="${points}"
+  fill="none"
+  stroke="#1976d2"
+  stroke-width="1.5"
+/>
+
+
+<rect
+  id="debitHitbox"
+  x="${margeGauche}"
+  y="${margeHaut}"
+  width="${graphW}"
+  height="${graphH}"
+  fill="transparent"
+  style="cursor:crosshair"
+/>
+
+
+<line
+  id="debitGuide"
+  x1="0"
+  y1="${margeHaut}"
+  x2="0"
+  y2="${margeHaut + graphH}"
+  stroke="#999"
+  stroke-dasharray="4 4"
+  visibility="hidden"
+/>
+
+
+<circle
+  id="debitPoint"
+  cx="0"
+  cy="0"
+  r="4"
+  fill="#1976d2"
+  visibility="hidden"
+/>
+
+
+<text
+  x="${margeGauche}"
+  y="${hauteur - 8}"
+  font-size="11"
+  fill="#666"
+>
+
+${new Date(
+  debitGraph[0].t
+).toLocaleDateString(
+  "fr-FR"
+)}
+
+</text>
+
+
+<text
+  x="${largeur - margeDroite}"
+  y="${hauteur - 8}"
+  text-anchor="end"
+  font-size="11"
+  fill="#666"
+>
+
+${new Date(
+  debitGraph[
+    debitGraph.length - 1
+  ].t
+).toLocaleDateString(
+  "fr-FR"
+)}
+
+</text>
+
+`;
+
+    })();
+
+
+  // ==================================================
+  // TABLEAU RADAR
+  // ==================================================
+
+  const tableauRadar =
+
+    Array.isArray(
+      radar
+    ) &&
+    radar.length > 0
+
+      ? `
+
+<div class="radar-table">
+
+<table>
+
+<tr>
+
+<th>
+Bassin
+</th>
+
+<th>
+Position
+</th>
+
+<th>
+Point
+</th>
+
+<th>
+12 h
+</th>
+
+<th>
+24 h
+</th>
+
+<th>
+2 j
+</th>
+
+<th>
+6 j
+</th>
+
+<th>
+15 j
+</th>
+
+</tr>
+
+
+${radar.map(
+  point => `
+
+<tr>
+
+<td>
+${point.bassin}
+</td>
+
+<td>
+${point.position}
+</td>
+
+<td>
+${point.nom}
+</td>
+
+<td>
+${point["12 h"]?.toFixed(1) ?? "—"} mm
+</td>
+
+<td>
+${point["24 h"]?.toFixed(1) ?? "—"} mm
+</td>
+
+<td>
+${point["2 j"]?.toFixed(1) ?? "—"} mm
+</td>
+
+<td>
+${point["6 j"]?.toFixed(1) ?? "—"} mm
+</td>
+
+<td>
+${point["15 j"]?.toFixed(1) ?? "—"} mm
+</td>
+
+</tr>
+
+`
+).join("")}
+
+</table>
+
+</div>
+
+`
+
+      : `
+
+<div class="placeholder">
+
+Données radar indisponibles
+
+</div>
+
+`;
+
+
+  // `previsions` sera utilisé pour l'affichage
+  // AROME / ARPEGE dans l'étape suivante.
+
+  void previsions;
+
+
+  // ==================================================
   // PAGE
-  // --------------------------------------------------
+  // ==================================================
 
   return `
 
@@ -1749,7 +2627,8 @@ Hydro Chartrettes
 
 * {
 
-  box-sizing: border-box;
+  box-sizing:
+    border-box;
 
 }
 
@@ -1757,13 +2636,13 @@ Hydro Chartrettes
 html,
 body {
 
-  margin: 0;
-  padding: 0;
+  margin:0;
 
-  width: 100%;
-  height: 100%;
+  padding:0;
 
-  overflow: hidden;
+  width:100%;
+
+  height:100%;
 
   font-family:
     Arial,
@@ -1936,6 +2815,9 @@ td {
   border-bottom:
     1px solid #e5e5e5;
 
+  white-space:
+    nowrap;
+
 }
 
 
@@ -1957,9 +2839,6 @@ td {
 
   color:
     #777;
-
-  margin-top:
-    2px;
 
 }
 
@@ -2042,10 +2921,29 @@ td {
 }
 
 
-@media (max-width: 900px) {
+.radar-table {
+
+  overflow-x:
+    auto;
+
+  width:
+    100%;
+
+}
+
+
+@media (
+  max-width: 900px
+) {
 
   html,
   body {
+
+    height:
+      auto;
+
+    min-height:
+      100%;
 
     overflow:
       auto;
@@ -2074,6 +2972,22 @@ td {
 
   }
 
+
+  .card {
+
+    overflow:
+      visible;
+
+  }
+
+
+  .radar-table {
+
+    overflow-x:
+      auto;
+
+  }
+
 }
 
 </style>
@@ -2083,11 +2997,12 @@ td {
 
 <body>
 
-
 <div class="dashboard">
 
 
+<!-- ============================================== -->
 <!-- HEADER -->
+<!-- ============================================== -->
 
 <div class="header">
 
@@ -2110,7 +3025,9 @@ ${formatDate(
 </div>
 
 
-<!-- DÉBIT CHARTRETTES -->
+<!-- ============================================== -->
+<!-- DEBIT -->
+<!-- ============================================== -->
 
 <div class="card">
 
@@ -2134,8 +3051,9 @@ Montereau + Épisy
 </div>
 
 
-<table style="margin-top:10px">
-
+<table
+  style="margin-top:10px"
+>
 
 <tr>
 
@@ -2245,14 +3163,13 @@ m³/s
 
 </tr>
 
-
 </table>
 
 
 ${
   decalageSuperieurUneHeure
 
-  ? `
+    ? `
 
 <div class="warning">
 
@@ -2266,15 +3183,16 @@ minutes
 
 `
 
-  : ""
-
+    : ""
 }
 
 
 </div>
 
 
+<!-- ============================================== -->
 <!-- SGL -->
+<!-- ============================================== -->
 
 <div class="card">
 
@@ -2293,6 +3211,7 @@ ${blocSGL}
 Débit — 30 derniers jours
 </h2>
 
+
 <div
   style="
     position:relative;
@@ -2307,208 +3226,16 @@ Débit — 30 derniers jours
   width="100%"
   height="260"
   preserveAspectRatio="none"
-  style="background:#f8f9fa;border-radius:6px;"
+  style="
+    background:#f8f9fa;
+    border-radius:6px;
+  "
 >
 
-${(() => {
-
-  if (
-    !Array.isArray(debitGraph) ||
-    debitGraph.length < 2
-  ) {
-    return `
-      <text
-        x="400"
-        y="130"
-        text-anchor="middle"
-        fill="#777"
-        font-size="14"
-      >
-        Données insuffisantes
-      </text>
-    `;
-  }
-
-  const largeur = 800;
-  const hauteur = 260;
-
-  const margeGauche = 55;
-  const margeDroite = 15;
-  const margeHaut = 15;
-  const margeBas = 30;
-
-  const graphW =
-    largeur - margeGauche - margeDroite;
-
-  const graphH =
-    hauteur - margeHaut - margeBas;
-
-  const valeurs =
-    debitGraph.map(
-      p => Number(p.debit)
-    );
-
-  const minDebit =
-    Math.min(...valeurs);
-
-  const maxDebit =
-    Math.max(...valeurs);
-
-  const amplitude =
-    Math.max(
-      maxDebit - minDebit,
-      1
-    );
-
-  const points =
-    debitGraph.map((p, i) => {
-
-      const x =
-        margeGauche +
-        (i / (debitGraph.length - 1)) *
-        graphW;
-
-      const y =
-        margeHaut +
-        graphH -
-        (
-          (Number(p.debit) - minDebit) /
-          amplitude
-        ) *
-        graphH;
-
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-
-    }).join(" ");
-
-  return `
-
-    <!-- axe vertical -->
-
-    <line
-      x1="${margeGauche}"
-      y1="${margeHaut}"
-      x2="${margeGauche}"
-      y2="${margeHaut + graphH}"
-      stroke="#999"
-    />
-
-    <!-- axe horizontal -->
-
-    <line
-      x1="${margeGauche}"
-      y1="${margeHaut + graphH}"
-      x2="${margeGauche + graphW}"
-      y2="${margeHaut + graphH}"
-      stroke="#999"
-    />
-
-    <!-- minimum -->
-
-    <text
-      x="${margeGauche - 8}"
-      y="${margeHaut + graphH}"
-      text-anchor="end"
-      dominant-baseline="middle"
-      font-size="11"
-      fill="#666"
-    >
-      ${minDebit.toFixed(0)}
-    </text>
-
-    <!-- maximum -->
-
-    <text
-      x="${margeGauche - 8}"
-      y="${margeHaut}"
-      text-anchor="end"
-      dominant-baseline="middle"
-      font-size="11"
-      fill="#666"
-    >
-      ${maxDebit.toFixed(0)}
-    </text>
-
-    <!-- courbe -->
-
-    <polyline
-      id="debitCurve"
-      points="${points}"
-      fill="none"
-      stroke="#1976d2"
-      stroke-width="1.5"
-    />
-
-    <!-- zone interactive -->
-
-    <rect
-      id="debitHitbox"
-      x="${margeGauche}"
-      y="${margeHaut}"
-      width="${graphW}"
-      height="${graphH}"
-      fill="transparent"
-      style="cursor:crosshair"
-    />
-
-    <!-- repère vertical -->
-
-    <line
-      id="debitGuide"
-      x1="0"
-      y1="${margeHaut}"
-      x2="0"
-      y2="${margeHaut + graphH}"
-      stroke="#999"
-      stroke-dasharray="4 4"
-      visibility="hidden"
-    />
-
-    <!-- point sélectionné -->
-
-    <circle
-      id="debitPoint"
-      cx="0"
-      cy="0"
-      r="4"
-      fill="#1976d2"
-      visibility="hidden"
-    />
-
-    <!-- date début -->
-
-    <text
-      x="${margeGauche}"
-      y="${hauteur - 8}"
-      font-size="11"
-      fill="#666"
-    >
-      ${new Date(
-        debitGraph[0].t
-      ).toLocaleDateString("fr-FR")}
-    </text>
-
-    <!-- date fin -->
-
-    <text
-      x="${largeur - margeDroite}"
-      y="${hauteur - 8}"
-      text-anchor="end"
-      font-size="11"
-      fill="#666"
-    >
-      ${new Date(
-        debitGraph[
-          debitGraph.length - 1
-        ].t
-      ).toLocaleDateString("fr-FR")}
-    </text>
-
-  `;
-
-})()}
+${graph}
 
 </svg>
+
 
 <div
   id="debitTooltip"
@@ -2521,80 +3248,169 @@ ${(() => {
     border-radius:5px;
     padding:7px 9px;
     font-size:12px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.15);
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
     white-space:nowrap;
     z-index:10;
   "
-></div>
+>
+</div>
+
 
 </div>
+
+</div>
+
+
+<!-- ============================================== -->
+<!-- RADAR -->
+<!-- ============================================== -->
+
+<div class="card card-radar">
+
+<h2>
+Précipitations cumulées radar
+</h2>
+
+
+${tableauRadar}
+
+</div>
+
+
+</div>
+
 
 <script>
 
 (() => {
 
-  const data = ${JSON.stringify(debitGraph)};
+  const data =
+    ${JSON.stringify(
+      debitGraph
+    )};
+
 
   const svg =
-    document.getElementById("debitGraph");
+    document.getElementById(
+      "debitGraph"
+    );
+
 
   const hitbox =
-    document.getElementById("debitHitbox");
+    document.getElementById(
+      "debitHitbox"
+    );
+
 
   const point =
-    document.getElementById("debitPoint");
+    document.getElementById(
+      "debitPoint"
+    );
+
 
   const guide =
-    document.getElementById("debitGuide");
+    document.getElementById(
+      "debitGuide"
+    );
+
 
   const tooltip =
-    document.getElementById("debitTooltip");
+    document.getElementById(
+      "debitTooltip"
+    );
 
-  if (!svg || !hitbox || !data.length) {
+
+  if (
+    !svg ||
+    !hitbox ||
+    !data.length
+  ) {
+
     return;
+
   }
 
-  const largeur = 800;
-  const hauteur = 260;
 
-  const margeGauche = 55;
-  const margeDroite = 15;
-  const margeHaut = 15;
-  const margeBas = 30;
+  const largeur =
+    800;
+
+
+  const hauteur =
+    260;
+
+
+  const margeGauche =
+    55;
+
+
+  const margeDroite =
+    15;
+
+
+  const margeHaut =
+    15;
+
+
+  const margeBas =
+    30;
+
 
   const graphW =
-    largeur - margeGauche - margeDroite;
+    largeur -
+    margeGauche -
+    margeDroite;
+
 
   const graphH =
-    hauteur - margeHaut - margeBas;
+    hauteur -
+    margeHaut -
+    margeBas;
+
 
   const valeurs =
     data.map(
-      p => Number(p.debit)
+      p =>
+        Number(
+          p.debit
+        )
     );
 
+
   const minDebit =
-    Math.min(...valeurs);
+    Math.min(
+      ...valeurs
+    );
+
 
   const maxDebit =
-    Math.max(...valeurs);
+    Math.max(
+      ...valeurs
+    );
+
 
   const amplitude =
     Math.max(
-      maxDebit - minDebit,
+      maxDebit -
+      minDebit,
       1
     );
+
 
   function trouverPoint(x) {
 
     let index =
       Math.round(
         (
-          x - margeGauche
+          x -
+          margeGauche
         ) /
         graphW *
-        (data.length - 1)
+        (
+          data.length -
+          1
+        )
       );
+
 
     index =
       Math.max(
@@ -2605,20 +3421,29 @@ ${(() => {
         )
       );
 
+
     return index;
+
   }
+
 
   function afficher(index) {
 
-    const p = data[index];
+    const p =
+      data[index];
+
 
     const x =
       margeGauche +
       (
         index /
-        (data.length - 1)
+        (
+          data.length -
+          1
+        )
       ) *
       graphW;
+
 
     const y =
       margeHaut +
@@ -2632,102 +3457,205 @@ ${(() => {
       ) *
       graphH;
 
-    point.setAttribute("cx", x);
-    point.setAttribute("cy", y);
 
-    guide.setAttribute("x1", x);
-    guide.setAttribute("x2", x);
+    point.setAttribute(
+      "cx",
+      x
+    );
+
+
+    point.setAttribute(
+      "cy",
+      y
+    );
+
+
+    guide.setAttribute(
+      "x1",
+      x
+    );
+
+
+    guide.setAttribute(
+      "x2",
+      x
+    );
+
 
     point.setAttribute(
       "visibility",
       "visible"
     );
 
+
     guide.setAttribute(
       "visibility",
       "visible"
     );
 
-    const date =
-      new Date(p.t)
-        .toLocaleString(
-          "fr-FR",
-          {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-          }
-        );
 
-tooltip.innerHTML =
-      "<strong>" + date + "</strong><br>" +
-      "Débit : " + Number(p.debit).toFixed(1) + " m³/s";
+    const date =
+      new Date(
+        p.t
+      ).toLocaleString(
+        "fr-FR",
+        {
+          day:
+            "2-digit",
+
+          month:
+            "2-digit",
+
+          year:
+            "numeric",
+
+          hour:
+            "2-digit",
+
+          minute:
+            "2-digit"
+        }
+      );
+
+
+    tooltip.innerHTML =
+
+      "<strong>" +
+      date +
+      "</strong><br>" +
+
+      "Débit : " +
+      Number(
+        p.debit
+      ).toFixed(1) +
+      " m³/s";
+
 
     const rect =
-  svg.getBoundingClientRect();
+      svg.getBoundingClientRect();
 
-const px =
-  (x / largeur) * rect.width;
 
-const py =
-  (y / hauteur) * rect.height;
+    const px =
+      (
+        x /
+        largeur
+      ) *
+      rect.width;
 
-const marge = 10;
 
-// Affichage temporaire pour connaître la taille réelle
-tooltip.style.display = "block";
-tooltip.style.left = "0px";
-tooltip.style.top = "0px";
+    const py =
+      (
+        y /
+        hauteur
+      ) *
+      rect.height;
 
-const tw = tooltip.offsetWidth;
-const th = tooltip.offsetHeight;
 
-let left;
-let top;
+    const marge =
+      10;
 
-// Position horizontale
-if (px + tw + marge <= rect.width) {
-  // À droite du point
-  left = px + marge;
-} else {
-  // À gauche du point
-  left = px - tw - marge;
-}
 
-// Position verticale
-if (py - th - marge >= 0) {
-  // Au-dessus du point
-  top = py - th - marge;
-} else {
-  // Sous le point
-  top = py + marge;
-}
+    tooltip.style.display =
+      "block";
 
-// Sécurité supplémentaire
-left = Math.max(
-  2,
-  Math.min(
-    left,
-    rect.width - tw - 2
-  )
-);
 
-top = Math.max(
-  2,
-  Math.min(
-    top,
-    rect.height - th - 2
-  )
-);
+    tooltip.style.left =
+      "0px";
 
-tooltip.style.left =
-  left + "px";
 
-tooltip.style.top =
-  top + "px";
+    tooltip.style.top =
+      "0px";
+
+
+    const tw =
+      tooltip.offsetWidth;
+
+
+    const th =
+      tooltip.offsetHeight;
+
+
+    let left;
+    let top;
+
+
+    if (
+      px +
+      tw +
+      marge <=
+      rect.width
+    ) {
+
+      left =
+        px +
+        marge;
+
+    } else {
+
+      left =
+        px -
+        tw -
+        marge;
+
+    }
+
+
+    if (
+      py -
+      th -
+      marge >=
+      0
+    ) {
+
+      top =
+        py -
+        th -
+        marge;
+
+    } else {
+
+      top =
+        py +
+        marge;
+
+    }
+
+
+    left =
+      Math.max(
+        2,
+        Math.min(
+          left,
+          rect.width -
+          tw -
+          2
+        )
+      );
+
+
+    top =
+      Math.max(
+        2,
+        Math.min(
+          top,
+          rect.height -
+          th -
+          2
+        )
+      );
+
+
+    tooltip.style.left =
+      left +
+      "px";
+
+
+    tooltip.style.top =
+      top +
+      "px";
+
   }
+
 
   function masquer() {
 
@@ -2736,19 +3664,26 @@ tooltip.style.top =
       "hidden"
     );
 
+
     guide.setAttribute(
       "visibility",
       "hidden"
     );
 
+
     tooltip.style.display =
       "none";
+
   }
 
-  function positionDepuisEvenement(event) {
+
+  function positionDepuisEvenement(
+    event
+  ) {
 
     const rect =
       svg.getBoundingClientRect();
+
 
     const x =
       (
@@ -2758,20 +3693,25 @@ tooltip.style.top =
       rect.width *
       largeur;
 
+
     afficher(
       trouverPoint(x)
     );
+
   }
+
 
   hitbox.addEventListener(
     "mousemove",
     positionDepuisEvenement
   );
 
+
   hitbox.addEventListener(
     "mouseleave",
     masquer
   );
+
 
   hitbox.addEventListener(
     "touchstart",
@@ -2779,13 +3719,17 @@ tooltip.style.top =
 
       event.preventDefault();
 
+
       positionDepuisEvenement(
         event.touches[0]
       );
 
     },
-    { passive:false }
+    {
+      passive:false
+    }
   );
+
 
   hitbox.addEventListener(
     "touchmove",
@@ -2793,67 +3737,27 @@ tooltip.style.top =
 
       event.preventDefault();
 
+
       positionDepuisEvenement(
         event.touches[0]
       );
 
     },
-    { passive:false }
+    {
+      passive:false
+    }
   );
+
 
   hitbox.addEventListener(
     "touchend",
     masquer
   );
 
+
 })();
 
 </script>
-
-</div>
-
-<!-- PRÉCIPITATIONS -->
-
-<div class="card">
-
-<h2>
-Précipitations cumulées radar
-</h2>
-
-<table>
-
-<tr>
-<th>Bassin</th>
-<th>Position</th>
-<th>Point</th>
-<th>12 h</th>
-<th>24 h</th>
-<th>2 j</th>
-<th>6 j</th>
-<th>15 j</th>
-</tr>
-
-${
-  radar.map(point => `
-  <tr>
-    <td>${point.bassin}</td>
-    <td>${point.position}</td>
-    <td>${point.nom}</td>
-    <td>${point["12 h"]?.toFixed(1) ?? "—"} mm</td>
-    <td>${point["24 h"]?.toFixed(1) ?? "—"} mm</td>
-    <td>${point["2 j"]?.toFixed(1) ?? "—"} mm</td>
-    <td>${point["6 j"]?.toFixed(1) ?? "—"} mm</td>
-    <td>${point["15 j"]?.toFixed(1) ?? "—"} mm</td>
-  </tr>
-  `).join("")
-}
-
-</table>
-
-</div>
-
-
-</div>
 
 
 </body>

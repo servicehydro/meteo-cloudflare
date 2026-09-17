@@ -182,6 +182,45 @@ if (url.pathname === "/test-sgl") {
   );
 
 }
+    if (url.pathname === "/test-collecte") {
+
+  try {
+
+    await collecteEtStockage(env);
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        message: "collecteEtStockage OK"
+      }, null, 2),
+      {
+        headers: {
+          "content-type":
+            "application/json; charset=UTF-8"
+        }
+      }
+    );
+
+  } catch (error) {
+
+    return new Response(
+      JSON.stringify({
+        ok: false,
+        erreur: error.message,
+        stack: error.stack
+      }, null, 2),
+      {
+        status: 500,
+        headers: {
+          "content-type":
+            "application/json; charset=UTF-8"
+        }
+      }
+    );
+
+  }
+
+}
 if (url.pathname === "/test-radar") {
 
   try {

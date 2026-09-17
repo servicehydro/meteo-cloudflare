@@ -825,27 +825,10 @@ async function getDebit(station) {
 
 async function getSGL(idPoint) {
 
-  const ids = [
-    "Aube5",
-    "Aube6",
-    "Aube7",
-    "Aube10",
-    "Seine7",
-    "Pann3",
-    "Pann8"
-  ];
-
-  const where =
-    ids
-      .map(id => `'${id}'`)
-      .join(",");
-
   const url =
-    `https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/FeatureServer/56/query` +
-    `?where=id_spot%20IN%20(${encodeURIComponent(where)})` +
-    `&outFields=objectid,id_spot,date,valeur` +
-    `&orderByFields=objectid%20DESC` +
-    `&resultRecordCount=2000` +
+    `https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/MapServer/64/query` +
+    `?where=id_pt_mesure%3D%27${encodeURIComponent(idPoint)}%27` +
+    `&outFields=id_pt_mesure,lac,type_ouvrage,description,valeur1,date` +
     `&returnGeometry=false` +
     `&f=json`;
 
@@ -853,9 +836,11 @@ async function getSGL(idPoint) {
     await fetch(url);
 
   if (!response.ok) {
+
     throw new Error(
-      `SGL HTTP ${response.status} pour ${idPoint}`
+      `SGL HTTP ${response.status}`
     );
+
   }
 
   const data =
@@ -865,47 +850,32 @@ async function getSGL(idPoint) {
     !data.features ||
     data.features.length === 0
   ) {
+
     throw new Error(
       `Aucune donnée SGL pour ${idPoint}`
     );
-  }
 
-  // On cherche la dernière mesure du point demandé
-  const mesures =
-    data.features
-      .filter(
-        feature =>
-          feature.attributes.id_spot === idPoint
-      )
-      .sort(
-        (a, b) =>
-          Number(b.attributes.date) -
-          Number(a.attributes.date)
-      );
-
-  if (mesures.length === 0) {
-    throw new Error(
-      `Aucune donnée SGL pour ${idPoint}`
-    );
   }
 
   const a =
-    mesures[0].attributes;
-
-  const debit =
-    Number(a.valeur);
-
-  if (!Number.isFinite(debit)) {
-    throw new Error(
-      `Valeur SGL invalide pour ${idPoint}`
-    );
-  }
+    data.features[0].attributes;
 
   return {
-    id: a.id_spot,
-    debit: debit,
-    date: a.date
+
+    id:
+      a.id_pt_mesure,
+
+    debit:
+      Number(a.valeur1),
+
+    date:
+      a.date,
+
+    description:
+      a.description
+
   };
+
 }
 // ==================================================
 // COLLECTE VIGICRUES + SGL

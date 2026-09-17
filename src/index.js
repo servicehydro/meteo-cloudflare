@@ -3138,13 +3138,13 @@ Précipitations cumulées radar
 </h2>
 
 ${tableauRadar}
-
-</div>
-
-
-</div>
-
 ${tableauPrevisions}
+</div>
+
+
+</div>
+
+
 <script>
 
 (() => {

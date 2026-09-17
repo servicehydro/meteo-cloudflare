@@ -844,7 +844,7 @@ async function getSGL(idPoint) {
     `https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/FeatureServer/56/query` +
     `?where=id_spot%20IN%20(${encodeURIComponent(where)})` +
     `&outFields=objectid,id_spot,date,valeur` +
-    `&orderByFields=date%20DESC` +
+    `&orderByFields=objectid%20DESC` +
     `&resultRecordCount=2000` +
     `&returnGeometry=false` +
     `&f=json`;

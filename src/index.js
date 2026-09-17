@@ -118,27 +118,45 @@ async scheduled(event, env, ctx) {
 },
 
   async fetch(request, env) {
-const url = new URL(request.url);
+async fetch(request, env) {
 
-if (url.pathname === "/test-sgl") {
-  const testUrl =
-    `https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/MapServer/64/query` +
-    `?where=id_pt_mesure%3D%27Aube5%27` +
-    `&outFields=id_pt_mesure%2Cvaleur1%2Cdate` +
-    `&returnGeometry=false` +
-    `&f=json`;
+  const url = new URL(request.url);
 
-  const r = await fetch(testUrl);
+  if (url.pathname === "/test-sgl") {
 
-  return new Response(
-    `HTTP SGL = ${r.status}\n\n${await r.text()}`,
-    {
-      headers: {
-        "content-type": "text/plain; charset=UTF-8"
-      }
+    try {
+
+      const resultat =
+        await getSGL("Aube5");
+
+      return new Response(
+        JSON.stringify(resultat),
+        {
+          headers: {
+            "content-type":
+              "application/json; charset=UTF-8"
+          }
+        }
+      );
+
+    } catch (error) {
+
+      return new Response(
+        "ERREUR : " + error.message,
+        {
+          status: 500,
+          headers: {
+            "content-type":
+              "text/plain; charset=UTF-8"
+          }
+        }
+      );
+
     }
-  );
-}
+
+  }
+
+  // ton code fetch actuel continue ici...
     try {
 
       return new Response(

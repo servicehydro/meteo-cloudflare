@@ -98,7 +98,13 @@ export default {
 
 async scheduled(event, env, ctx) {
 
-  const job = collecteEtStockage(env);
+  let job;
+
+  if (event.cron === "*/5 * * * *") {
+    job = collecteRadar(env);
+  } else {
+    job = collecteEtStockage(env);
+  }
 
   ctx.waitUntil(
     job.catch(error => {

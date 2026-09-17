@@ -2427,7 +2427,6 @@ const tableauPrevisions =
   previsions &&
   Array.isArray(previsions.points)
     ? `
-<div class="card">
 
 <h2>
 Précipitations prévues — AROME 48 h
@@ -2464,10 +2463,8 @@ ${point.pluie_mm !== null
 
 </table>
 
-</div>
 `
     : `
-<div class="card">
 
 <h2>
 Précipitations prévues — AROME 48 h
@@ -2477,7 +2474,6 @@ Précipitations prévues — AROME 48 h
 Données AROME indisponibles
 </div>
 
-</div>
 `;
 
 
@@ -2562,7 +2558,13 @@ body {
     1fr 1fr;
 
   grid-template-rows:
-    auto 1fr 1fr;
+    auto 1fr auto 1fr;
+
+  grid-template-areas:
+    "header header"
+    "debit forecast"
+    "sgl radar"
+    "graph radar";
 
   gap:
     10px;
@@ -2572,8 +2574,8 @@ body {
 
 .header {
 
-  grid-column:
-    1 / 3;
+  grid-area:
+    header;
 
   display:
     flex;
@@ -2605,7 +2607,25 @@ body {
     24px;
 
 }
+.debit-card {
+  grid-area: debit;
+}
 
+.sgl-card {
+  grid-area: sgl;
+}
+
+.graph-card {
+  grid-area: graph;
+}
+
+.forecast-card {
+  grid-area: forecast;
+}
+
+.radar-card {
+  grid-area: radar;
+}
 
 .card {
 
@@ -2622,7 +2642,28 @@ body {
     hidden;
 
 }
+.sgl-card h2 {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
 
+.sgl-card .sgl-total {
+  font-size: 24px;
+  margin: 2px 0 6px;
+}
+
+.sgl-card table {
+  font-size: 11px;
+}
+
+.sgl-card th,
+.sgl-card td {
+  padding: 4px;
+}
+
+.sgl-card .station-date {
+  font-size: 9px;
+}
 
 .card h2 {
 
@@ -2836,16 +2877,24 @@ td {
 
   .dashboard {
 
-    height:
-      auto;
+  height:
+    auto;
 
-    grid-template-columns:
-      1fr;
+  grid-template-columns:
+    1fr;
 
-    grid-template-rows:
-      auto;
+  grid-template-rows:
+    auto;
 
-  }
+  grid-template-areas:
+    "header"
+    "debit"
+    "sgl"
+    "forecast"
+    "radar"
+    "graph";
+
+}
 
 
   .header {
@@ -2905,7 +2954,7 @@ ${formatDate(
 <!-- DEBIT -->
 <!-- ============================================== -->
 
-<div class="card">
+<div class="card debit-card">
 
 <h2>
 Débit estimé à Chartrettes
@@ -3064,7 +3113,7 @@ minutes
 <!-- SGL -->
 <!-- ============================================== -->
 
-<div class="card">
+<div class="card sgl-card">
 
 ${blocSGL}
 
@@ -3075,7 +3124,7 @@ ${blocSGL}
 <!-- GRAPHE -->
 <!-- ============================================== -->
 
-<div class="card">
+<div class="card graph-card">
 
 <h2>
 Débit — 30 derniers jours
@@ -3134,14 +3183,21 @@ ${graph}
 <!-- RADAR -->
 <!-- ============================================== -->
 
-<div class="card">
+<div class="card forecast-card">
 
-<h2>
-Précipitations cumulées radar
-</h2>
+  ${tableauPrevisions}
 
-${tableauRadar}
-${tableauPrevisions}
+</div>
+
+
+<div class="card radar-card">
+
+  <h2>
+  Précipitations cumulées radar
+  </h2>
+
+  ${tableauRadar}
+
 </div>
 
 

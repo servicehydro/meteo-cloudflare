@@ -243,11 +243,7 @@ async function collectePrevisionsAROME(env) {
   // --------------------------------------------------
 
   const capResponse = await fetch(
-    console.log(
-  "AROME GetCapabilities",
-  capResponse.status
-);
-    BASE +
+   BASE +
     "/GetCapabilities" +
     "?service=WCS&version=2.0.1&language=fre",
     {
@@ -256,7 +252,10 @@ async function collectePrevisionsAROME(env) {
       }
     }
   );
-
+ console.log(
+  "AROME GetCapabilities",
+  capResponse.status
+);
   const catalogue =
     await capResponse.text();
 

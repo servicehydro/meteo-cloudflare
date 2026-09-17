@@ -825,8 +825,10 @@ async function getDebit(station) {
 
 async function getSGL(idPoint) {
 
-  const url =
-    `https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/FeatureServer/56/query` +
+  const base =
+    "https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/";
+
+  const query =
     `?where=id_spot%3D%27${encodeURIComponent(idPoint)}%27` +
     `&outFields=objectid,id_spot,date,valeur` +
     `&orderByFields=date%20DESC` +
@@ -834,60 +836,67 @@ async function getSGL(idPoint) {
     `&returnGeometry=false` +
     `&f=json`;
 
-  const response =
-    await fetch(url);
+  const urls = [
+    `${base}FeatureServer/56/query${query}`,
+    `${base}MapServer/56/query${query}`
+  ];
 
-  if (!response.ok) {
+  let derniereErreur = null;
 
-    throw new Error(
-      `SGL HTTP ${response.status} pour ${idPoint}`
-    );
+  for (const url of urls) {
 
+    try {
+
+      const response = await fetch(url, {
+        cf: {
+          cacheTtl: 0
+        }
+      });
+
+      if (!response.ok) {
+        derniereErreur =
+          `SGL HTTP ${response.status} pour ${idPoint}`;
+        continue;
+      }
+
+      const data = await response.json();
+
+      if (
+        !data.features ||
+        data.features.length === 0
+      ) {
+        derniereErreur =
+          `Aucune donnée SGL pour ${idPoint}`;
+        continue;
+      }
+
+      const a =
+        data.features[0].attributes;
+
+      const debit =
+        Number(a.valeur);
+
+      if (!Number.isFinite(debit)) {
+        derniereErreur =
+          `Valeur SGL invalide pour ${idPoint}`;
+        continue;
+      }
+
+      return {
+        id: a.id_spot,
+        debit: debit,
+        date: a.date
+      };
+
+    } catch (error) {
+
+      derniereErreur =
+        `SGL erreur pour ${idPoint} : ${error.message}`;
+
+    }
   }
 
-  const data =
-    await response.json();
-
-  if (
-    !data.features ||
-    data.features.length === 0
-  ) {
-
-    throw new Error(
-      `Aucune donnée SGL pour ${idPoint}`
-    );
-
-  }
-
-  const a =
-    data.features[0].attributes;
-
-  const debit =
-    Number(
-      a.valeur
-    );
-
-  if (!Number.isFinite(debit)) {
-
-    throw new Error(
-      `Valeur SGL invalide pour ${idPoint}`
-    );
-
-  }
-
-  return {
-
-    id:
-      a.id_spot,
-
-    debit:
-      debit,
-
-    date:
-      a.date
-
-  };
-
+  throw new Error(derniereErreur);
 }
 
 

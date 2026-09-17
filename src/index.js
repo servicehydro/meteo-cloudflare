@@ -2420,7 +2420,62 @@ Données radar indisponibles
 
 
   // Prévisions chargées mais pas encore affichées
-  void previsions;
+const tableauPrevisions =
+  previsions &&
+  Array.isArray(previsions.points)
+    ? `
+<div class="card">
+
+<h2>
+Précipitations prévues — AROME 48 h
+</h2>
+
+<table>
+
+<tr>
+<th>Bassin</th>
+<th>Position</th>
+<th>Point</th>
+<th>48 h</th>
+</tr>
+
+${previsions.points.map(point => `
+
+<tr>
+
+<td>${point.bassin}</td>
+
+<td>${point.position}</td>
+
+<td>${point.nom}</td>
+
+<td>
+${point.pluie_mm !== null
+  ? Number(point.pluie_mm).toFixed(1) + " mm"
+  : "—"}
+</td>
+
+</tr>
+
+`).join("")}
+
+</table>
+
+</div>
+`
+    : `
+<div class="card">
+
+<h2>
+Précipitations prévues — AROME 48 h
+</h2>
+
+<div class="placeholder">
+Données AROME indisponibles
+</div>
+
+</div>
+`;
 
 
   // ==================================================
@@ -3089,7 +3144,7 @@ ${tableauRadar}
 
 </div>
 
-
+${tableauPrevisions}
 <script>
 
 (() => {

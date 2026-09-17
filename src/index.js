@@ -112,7 +112,27 @@ async scheduled(event, env, ctx) {
 },
 
   async fetch(request, env) {
+const url = new URL(request.url);
 
+if (url.pathname === "/test-sgl") {
+  const testUrl =
+    `https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/MapServer/64/query` +
+    `?where=id_pt_mesure%3D%27Aube5%27` +
+    `&outFields=id_pt_mesure%2Cvaleur1%2Cdate` +
+    `&returnGeometry=false` +
+    `&f=json`;
+
+  const r = await fetch(testUrl);
+
+  return new Response(
+    `HTTP SGL = ${r.status}\n\n${await r.text()}`,
+    {
+      headers: {
+        "content-type": "text/plain; charset=UTF-8"
+      }
+    }
+  );
+}
     try {
 
       return new Response(

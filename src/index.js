@@ -1087,11 +1087,17 @@ const cles =
     Array.isArray(historiqueDebit)
       ? historiqueDebit
       : [];
-  
+    
+  const previsions =
+    await env.RADAR_KV.get(
+      "forecast_rain",
+      "json"
+    );
   return pageAvecMesure(
     mesure,
     radar,
-    debitGraph
+    debitGraph,
+    previsions
   );
 
 }
@@ -1178,7 +1184,7 @@ Aucune mesure enregistrée.
 // PAGE PRINCIPALE
 // ==================================================
 
-function pageAvecMesure(mesure,radar,debitGraph) {
+function pageAvecMesure(mesure,radar,debitGraph, previsions) {
 
   const montereau =
     mesure.montereau || {};

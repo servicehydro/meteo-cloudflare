@@ -825,9 +825,6 @@ async function getDebit(station) {
 
 async function getSGL(idPoint) {
 
-  const base =
-    "https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/";
-
   const query =
     `?where=id_spot%3D%27${encodeURIComponent(idPoint)}%27` +
     `&outFields=objectid,id_spot,date,valeur` +
@@ -837,8 +834,8 @@ async function getSGL(idPoint) {
     `&f=json`;
 
   const urls = [
-    `${base}FeatureServer/56/query${query}`,
-    `${base}MapServer/56/query${query}`
+    `https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/FeatureServer/56/query${query}`,
+    `https://sig.seinegrandslacs.fr/arcgis/rest/services/OGDE_mesures/MapServer/56/query${query}`
   ];
 
   let derniereErreur = null;
@@ -847,11 +844,7 @@ async function getSGL(idPoint) {
 
     try {
 
-      const response = await fetch(url, {
-        cf: {
-          cacheTtl: 0
-        }
-      });
+      const response = await fetch(url);
 
       if (!response.ok) {
         derniereErreur =
@@ -898,7 +891,6 @@ async function getSGL(idPoint) {
 
   throw new Error(derniereErreur);
 }
-
 
 // ==================================================
 // COLLECTE VIGICRUES + SGL

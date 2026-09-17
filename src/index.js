@@ -96,7 +96,7 @@ const FORECAST_POINTS =
 // ==================================================
 export default {
 
-  aasync scheduled(event, env, ctx) {
+  async scheduled(event, env, ctx) {
 
   let job;
 

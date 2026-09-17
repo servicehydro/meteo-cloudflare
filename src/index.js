@@ -182,7 +182,45 @@ if (url.pathname === "/test-sgl") {
   );
 
 }
+if (url.pathname === "/test-radar") {
 
+  try {
+
+    await collecteRadar(env);
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        message: "collecteRadar exécutée sans erreur"
+      }, null, 2),
+      {
+        headers: {
+          "content-type":
+            "application/json; charset=UTF-8"
+        }
+      }
+    );
+
+  } catch (error) {
+
+    return new Response(
+      JSON.stringify({
+        ok: false,
+        erreur: error.message,
+        stack: error.stack
+      }, null, 2),
+      {
+        status: 500,
+        headers: {
+          "content-type":
+            "application/json; charset=UTF-8"
+        }
+      }
+    );
+
+  }
+
+}
     try {
 
       return new Response(

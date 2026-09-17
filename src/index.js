@@ -232,7 +232,277 @@ async function collecteRadar(env) {
   );
 
 }
+async function collectePrevisionsAROME(env) {
 
+  const BASE =
+    "https://public-api.meteofrance.fr/public/arome/1.0/wcs/" +
+    "MF-NWP-HIGHRES-AROME-001-FRANCE-WCS";
+
+  // --------------------------------------------------
+  // 1. Catalogue AROME
+  // --------------------------------------------------
+
+  const capResponse = await fetch(
+    BASE +
+    "/GetCapabilities" +
+    "?service=WCS&version=2.0.1&language=fre",
+    {
+      headers: {
+        apikey: env.METEOFRANCE_API_KEY
+      }
+    }
+  );
+
+  const catalogue =
+    await capResponse.text();
+
+  if (!capResponse.ok) {
+    throw new Error(
+      `AROME GetCapabilities ${capResponse.status}`
+    );
+  }
+
+  // --------------------------------------------------
+  // 2. Dernier coverage P2D
+  // --------------------------------------------------
+
+  const regex =
+    /<wcs:CoverageId>(TOTAL_WATER_PRECIPITATION__GROUND_OR_WATER_SURFACE___(\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}Z)_P2D)<\/wcs:CoverageId>/g;
+
+  const couvertures = [];
+
+  for (const match of catalogue.matchAll(regex)) {
+
+    couvertures.push({
+      coverageId: match[1],
+      run: match[2]
+    });
+
+  }
+
+  if (!couvertures.length) {
+    throw new Error(
+      "Aucun coverage AROME P2D disponible"
+    );
+  }
+
+  couvertures.sort(
+    (a, b) =>
+      a.run.localeCompare(b.run)
+  );
+
+  const dernier =
+    couvertures[
+      couvertures.length - 1
+    ];
+
+  // --------------------------------------------------
+  // 3. Échéance +48 h
+  // --------------------------------------------------
+
+  const runIso =
+    dernier.run.replace(
+      /^(\d{4}-\d{2}-\d{2}T\d{2})\.(\d{2})\.(\d{2})Z$/,
+      "$1:$2:$3Z"
+    );
+
+  const echeance =
+    new Date(
+      new Date(runIso).getTime() +
+      48 * 60 * 60 * 1000
+    )
+      .toISOString()
+      .replace(".000Z", "Z");
+
+  // --------------------------------------------------
+  // 4. Emprise des 9 points
+  // --------------------------------------------------
+
+  const latMin =
+    Math.floor(
+      Math.min(...RADAR_POINTS.map(p => p.latitude)) * 100
+    ) / 100;
+
+  const latMax =
+    Math.ceil(
+      Math.max(...RADAR_POINTS.map(p => p.latitude)) * 100
+    ) / 100;
+
+  const lonMin =
+    Math.floor(
+      Math.min(...RADAR_POINTS.map(p => p.longitude)) * 100
+    ) / 100;
+
+  const lonMax =
+    Math.ceil(
+      Math.max(...RADAR_POINTS.map(p => p.longitude)) * 100
+    ) / 100;
+
+  // --------------------------------------------------
+  // 5. GetCoverage
+  // --------------------------------------------------
+
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    "service",
+    "WCS"
+  );
+
+  params.set(
+    "version",
+    "2.0.1"
+  );
+
+  params.set(
+    "coverageid",
+    dernier.coverageId
+  );
+
+  params.append(
+    "subset",
+    `time(${echeance})`
+  );
+
+  params.append(
+    "subset",
+    `lat(${latMin},${latMax})`
+  );
+
+  params.append(
+    "subset",
+    `long(${lonMin},${lonMax})`
+  );
+
+  params.set(
+    "format",
+    "image/tiff"
+  );
+
+  const coverageResponse =
+    await fetch(
+      BASE +
+      "/GetCoverage?" +
+      params.toString(),
+      {
+        headers: {
+          apikey:
+            env.METEOFRANCE_API_KEY
+        }
+      }
+    );
+
+  const buffer =
+    await coverageResponse.arrayBuffer();
+
+  if (!coverageResponse.ok) {
+
+    throw new Error(
+      `AROME GetCoverage ${coverageResponse.status}: ` +
+      new TextDecoder().decode(buffer)
+    );
+
+  }
+
+  // --------------------------------------------------
+  // 6. Lecture GeoTIFF
+  // --------------------------------------------------
+
+  const tiff =
+    await fromArrayBuffer(buffer);
+
+  const image =
+    await tiff.getImage();
+
+  const width =
+    image.getWidth();
+
+  const height =
+    image.getHeight();
+
+  const origin =
+    image.getOrigin();
+
+  const resolution =
+    image.getResolution();
+
+  const raster =
+    await image.readRasters({
+      interleave: true
+    });
+
+  // --------------------------------------------------
+  // 7. Extraction des 9 points
+  // --------------------------------------------------
+
+  const points =
+    RADAR_POINTS.map(point => {
+
+      const colonne =
+        Math.floor(
+          (point.longitude - origin[0]) /
+          resolution[0]
+        );
+
+      const ligne =
+        Math.floor(
+          (point.latitude - origin[1]) /
+          resolution[1]
+        );
+
+      const index =
+        ligne * width + colonne;
+
+      const valeur =
+        Number(raster[index]);
+
+      return {
+
+        nom:
+          point.nom,
+
+        bassin:
+          point.bassin,
+
+        position:
+          point.position,
+
+        pluie_mm:
+          Number.isFinite(valeur)
+            ? Math.round(valeur * 10) / 10
+            : null
+
+      };
+
+    });
+
+  // --------------------------------------------------
+  // 8. Stockage
+  // --------------------------------------------------
+
+  await env.RADAR_KV.put(
+    "forecast_rain",
+    JSON.stringify({
+
+      updated:
+        new Date().toISOString(),
+
+      modele:
+        "AROME",
+
+      run:
+        dernier.run,
+
+      echeance_48h:
+        echeance,
+
+      points
+
+    })
+  );
+
+}
 
 // ==================================================
 // VIGICRUES

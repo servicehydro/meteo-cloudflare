@@ -1,10 +1,5 @@
 import h5wasm from "h5wasm";
-import { fromArrayBuffer } from "geotiff";
-
-
-// ==================================================
-// POINTS RADAR
-// ==================================================
+import * as GeoTIFF from "geotiff";
 
 const RADAR_POINTS = [
   {
@@ -34,7 +29,6 @@ const RADAR_POINTS = [
     ligne: 1279,
     colonne: 1632
   },
-
   {
     nom: "Auxerre",
     bassin: "Yonne",
@@ -62,7 +56,6 @@ const RADAR_POINTS = [
     ligne: 1246,
     colonne: 1704
   },
-
   {
     nom: "Nogent-sur-Seine",
     bassin: "Seine",
@@ -92,78 +85,10 @@ const RADAR_POINTS = [
   }
 ];
 
-
-// ==================================================
-// POINTS PREVISIONS
-// ==================================================
-
-const FORECAST_POINTS = [
-  {
-    nom: "Montargis",
-    bassin: "Loing",
-    position: "Amont",
-    latitude: 47.9978628,
-    longitude: 2.7310072
-  },
-  {
-    nom: "Nemours",
-    bassin: "Loing",
-    position: "Médian",
-    latitude: 48.2680260,
-    longitude: 2.6953079
-  },
-  {
-    nom: "Château-Landon",
-    bassin: "Loing",
-    position: "Aval",
-    latitude: 48.1496366,
-    longitude: 2.7032718
-  },
-
-  {
-    nom: "Auxerre",
-    bassin: "Yonne",
-    position: "Amont",
-    latitude: 47.7961287,
-    longitude: 3.5705790
-  },
-  {
-    nom: "Joigny",
-    bassin: "Yonne",
-    position: "Médian",
-    latitude: 47.9812486,
-    longitude: 3.3995767
-  },
-  {
-    nom: "Pont-sur-Yonne",
-    bassin: "Yonne",
-    position: "Aval",
-    latitude: 48.2852895,
-    longitude: 3.2045813
-  },
-
-  {
-    nom: "Nogent-sur-Seine",
-    bassin: "Seine",
-    position: "Amont",
-    latitude: 48.4924390,
-    longitude: 3.4978181
-  },
-  {
-    nom: "Montereau",
-    bassin: "Seine",
-    position: "Médian",
-    latitude: 47.8564484,
-    longitude: 2.5717138
-  },
-  {
-    nom: "Chartrettes",
-    bassin: "Seine",
-    position: "Aval",
-    latitude: 48.4881157,
-    longitude: 2.7005289
-  }
-];
+const FORECAST_POINTS =
+  RADAR_POINTS.map(
+    ({ ligne, colonne, ...point }) => point
+  );
 
 
 // ==================================================
@@ -235,12 +160,10 @@ async function collecteRadar(env) {
     "https://public-api.meteofrance.fr/public/DPRadar/v1/" +
     "mosaiques/METROPOLE/observations/LAME_D_EAU/produit?maille=500";
 
-
   console.log(
     "RADAR API KEY PRESENT",
     !!env.METEOFRANCE_API_KEY
   );
-
 
   const response =
     await fetch(
@@ -253,12 +176,10 @@ async function collecteRadar(env) {
       }
     );
 
-
   console.log(
     "RADAR HTTP",
     response.status
   );
-
 
   if (!response.ok) {
 
@@ -269,18 +190,15 @@ async function collecteRadar(env) {
 
   }
 
-
   const disposition =
     response.headers.get(
       "content-disposition"
     ) || "";
 
-
   const match =
     disposition.match(
       /(\d{14})/
     );
-
 
   if (!match) {
 
@@ -290,37 +208,25 @@ async function collecteRadar(env) {
 
   }
 
-
-  const s =
-    match[1];
-
+  const s = match[1];
 
   const timestamp =
-    `${s.substring(0, 4)}-` +
-    `${s.substring(4, 6)}-` +
-    `${s.substring(6, 8)}T` +
-    `${s.substring(8, 10)}:` +
-    `${s.substring(10, 12)}:` +
-    `${s.substring(12, 14)}Z`;
-
+    `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}T` +
+    `${s.slice(8, 10)}:${s.slice(10, 12)}:${s.slice(12, 14)}Z`;
 
   const buffer =
     await response.arrayBuffer();
 
-
   const Module =
     await h5wasm.ready;
 
-
   const { FS } =
     Module;
-
 
   FS.writeFile(
     "/radar.h5",
     new Uint8Array(buffer)
   );
-
 
   const file =
     new h5wasm.File(
@@ -328,20 +234,16 @@ async function collecteRadar(env) {
       "r"
     );
 
-
   const dataset =
     file.get(
       "dataset1/data1/data"
     );
 
-
   const data =
     dataset.value;
 
-
   const cols =
     dataset.shape[1];
-
 
   const pluies =
     RADAR_POINTS.map(
@@ -353,7 +255,6 @@ async function collecteRadar(env) {
             point.colonne
           ];
 
-
         if (
           valeurBrute === 65535 ||
           valeurBrute === 65534
@@ -363,12 +264,10 @@ async function collecteRadar(env) {
 
         }
 
-
         return valeurBrute * 0.01;
 
       }
     );
-
 
   let historique =
     await env.RADAR_KV.get(
@@ -376,13 +275,9 @@ async function collecteRadar(env) {
       "json"
     );
 
-
   if (!Array.isArray(historique)) {
-
     historique = [];
-
   }
-
 
   if (
     !historique.some(
@@ -397,27 +292,31 @@ async function collecteRadar(env) {
 
   }
 
-
   const limite =
     new Date(timestamp).getTime() -
     15 * 24 * 60 * 60 * 1000;
-
 
   historique =
     historique
       .filter(
         m =>
-          new Date(m.t).getTime() >=
-          limite
+          new Date(
+            m.t
+          ).getTime() >= limite
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.t).getTime() -
+          new Date(b.t).getTime()
       )
       .slice(-4320);
 
-
   await env.RADAR_KV.put(
     "radar_history",
-    JSON.stringify(historique)
+    JSON.stringify(
+      historique
+    )
   );
-
 
   console.log(
     "Radar OK",
@@ -457,9 +356,7 @@ function calculerCumuls(
 
   };
 
-
   const result = {};
-
 
   for (
     const [nom, duree]
@@ -469,9 +366,7 @@ function calculerCumuls(
     const limite =
       maintenant - duree;
 
-
     let somme = 0;
-
 
     for (
       const mesure
@@ -479,8 +374,9 @@ function calculerCumuls(
     ) {
 
       const t =
-        new Date(mesure.t).getTime();
-
+        new Date(
+          mesure.t
+        ).getTime();
 
       if (
         t > limite &&
@@ -496,14 +392,12 @@ function calculerCumuls(
 
     }
 
-
     result[nom] =
       Math.round(
         somme * 100
       ) / 100;
 
   }
-
 
   return result;
 
@@ -522,55 +416,47 @@ async function collectePrevisionsAROME(env) {
 
 
   // --------------------------------------------------
-  // 1. Catalogue
+  // 1. CATALOGUE
   // --------------------------------------------------
 
   const capResponse =
     await fetch(
-
       BASE +
       "/GetCapabilities" +
       "?service=WCS&version=2.0.1&language=fre",
-
       {
         headers: {
           apikey:
             env.METEOFRANCE_API_KEY
         }
       }
-
     );
-
 
   console.log(
     "AROME GetCapabilities",
     capResponse.status
   );
 
-
   const catalogue =
     await capResponse.text();
-
 
   if (!capResponse.ok) {
 
     throw new Error(
-      `AROME GetCapabilities ${capResponse.status}`
+      `AROME GetCapabilities ${capResponse.status}: ${catalogue}`
     );
 
   }
 
 
   // --------------------------------------------------
-  // 2. Coverage P2D
+  // 2. COVERAGES P2D
   // --------------------------------------------------
 
   const regex =
     /<wcs:CoverageId>(TOTAL_WATER_PRECIPITATION__GROUND_OR_WATER_SURFACE___(\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}Z)_P2D)<\/wcs:CoverageId>/g;
 
-
   const couvertures = [];
-
 
   for (
     const match
@@ -578,17 +464,14 @@ async function collectePrevisionsAROME(env) {
   ) {
 
     couvertures.push({
-
       coverageId:
         match[1],
 
       run:
         match[2]
-
     });
 
   }
-
 
   if (!couvertures.length) {
 
@@ -598,12 +481,10 @@ async function collectePrevisionsAROME(env) {
 
   }
 
-
   couvertures.sort(
     (a, b) =>
       a.run.localeCompare(b.run)
   );
-
 
   const dernier =
     couvertures[
@@ -612,7 +493,7 @@ async function collectePrevisionsAROME(env) {
 
 
   // --------------------------------------------------
-  // 3. Echéance +48 h
+  // 3. RUN -> ISO
   // --------------------------------------------------
 
   const runIso =
@@ -621,6 +502,10 @@ async function collectePrevisionsAROME(env) {
       "$1:$2:$3Z"
     );
 
+
+  // --------------------------------------------------
+  // 4. ECHEANCE +48 H
+  // --------------------------------------------------
 
   const echeance =
     new Date(
@@ -635,7 +520,7 @@ async function collectePrevisionsAROME(env) {
 
 
   // --------------------------------------------------
-  // 4. Emprise
+  // 5. EMPRISE DES 9 POINTS
   // --------------------------------------------------
 
   const latMin =
@@ -647,7 +532,6 @@ async function collectePrevisionsAROME(env) {
       ) * 100
     ) / 100;
 
-
   const latMax =
     Math.ceil(
       Math.max(
@@ -657,7 +541,6 @@ async function collectePrevisionsAROME(env) {
       ) * 100
     ) / 100;
 
-
   const lonMin =
     Math.floor(
       Math.min(
@@ -666,7 +549,6 @@ async function collectePrevisionsAROME(env) {
         )
       ) * 100
     ) / 100;
-
 
   const lonMax =
     Math.ceil(
@@ -679,48 +561,41 @@ async function collectePrevisionsAROME(env) {
 
 
   // --------------------------------------------------
-  // 5. GetCoverage
+  // 6. GETCOVERAGE
   // --------------------------------------------------
 
   const params =
     new URLSearchParams();
-
 
   params.set(
     "service",
     "WCS"
   );
 
-
   params.set(
     "version",
     "2.0.1"
   );
-
 
   params.set(
     "coverageid",
     dernier.coverageId
   );
 
-
   params.append(
     "subset",
     `time(${echeance})`
   );
-
 
   params.append(
     "subset",
     `lat(${latMin},${latMax})`
   );
 
-
   params.append(
     "subset",
     `long(${lonMin},${lonMax})`
   );
-
 
   params.set(
     "format",
@@ -730,18 +605,15 @@ async function collectePrevisionsAROME(env) {
 
   const coverageResponse =
     await fetch(
-
       BASE +
       "/GetCoverage?" +
       params.toString(),
-
       {
         headers: {
           apikey:
             env.METEOFRANCE_API_KEY
         }
       }
-
     );
 
 
@@ -762,34 +634,25 @@ async function collectePrevisionsAROME(env) {
 
 
   // --------------------------------------------------
-  // 6. GeoTIFF
+  // 7. LECTURE GEOTIFF
   // --------------------------------------------------
 
   const tiff =
-    await fromArrayBuffer(
+    await GeoTIFF.fromArrayBuffer(
       buffer
     );
-
 
   const image =
     await tiff.getImage();
 
-
   const width =
     image.getWidth();
-
-
-  const height =
-    image.getHeight();
-
 
   const origin =
     image.getOrigin();
 
-
   const resolution =
     image.getResolution();
-
 
   const raster =
     await image.readRasters({
@@ -798,7 +661,7 @@ async function collectePrevisionsAROME(env) {
 
 
   // --------------------------------------------------
-  // 7. Extraction
+  // 8. EXTRACTION
   // --------------------------------------------------
 
   const points =
@@ -814,7 +677,6 @@ async function collectePrevisionsAROME(env) {
             resolution[0]
           );
 
-
         const ligne =
           Math.floor(
             (
@@ -824,17 +686,14 @@ async function collectePrevisionsAROME(env) {
             resolution[1]
           );
 
-
         const index =
           ligne * width +
           colonne;
-
 
         const valeur =
           Number(
             raster[index]
           );
-
 
         return {
 
@@ -871,13 +730,11 @@ async function collectePrevisionsAROME(env) {
 
 
   // --------------------------------------------------
-  // 8. Stockage
+  // 9. STOCKAGE
   // --------------------------------------------------
 
   await env.RADAR_KV.put(
-
     "forecast_rain",
-
     JSON.stringify({
 
       updated:
@@ -895,7 +752,6 @@ async function collectePrevisionsAROME(env) {
       points
 
     })
-
   );
 
 }
@@ -913,10 +769,8 @@ async function getDebit(station) {
     `&GrdSerie=Q` +
     `&FormatDate=iso`;
 
-
   const response =
     await fetch(url);
-
 
   if (!response.ok) {
 
@@ -926,17 +780,16 @@ async function getDebit(station) {
 
   }
 
-
   const data =
     await response.json();
-
 
   const observations =
     data?.Serie?.ObssHydro;
 
-
   if (
-    !Array.isArray(observations) ||
+    !Array.isArray(
+      observations
+    ) ||
     observations.length === 0
   ) {
 
@@ -946,12 +799,10 @@ async function getDebit(station) {
 
   }
 
-
   const derniere =
     observations[
       observations.length - 1
     ];
-
 
   return {
 
@@ -983,10 +834,8 @@ async function getSGL(idPoint) {
     `&returnGeometry=false` +
     `&f=json`;
 
-
   const response =
     await fetch(url);
-
 
   if (!response.ok) {
 
@@ -996,10 +845,8 @@ async function getSGL(idPoint) {
 
   }
 
-
   const data =
     await response.json();
-
 
   if (
     !data.features ||
@@ -1012,14 +859,13 @@ async function getSGL(idPoint) {
 
   }
 
-
   const a =
     data.features[0].attributes;
 
-
   const debit =
-    Number(a.valeur);
-
+    Number(
+      a.valeur
+    );
 
   if (!Number.isFinite(debit)) {
 
@@ -1028,7 +874,6 @@ async function getSGL(idPoint) {
     );
 
   }
-
 
   return {
 
@@ -1052,30 +897,20 @@ async function getSGL(idPoint) {
 
 async function collecteEtStockage(env) {
 
-  // --------------------------------------------------
-  // Vigicrues
-  // --------------------------------------------------
-
   const montereau =
     await getDebit(
       "F400000102"
     );
-
 
   const episy =
     await getDebit(
       "F439000101"
     );
 
-
   const total =
     montereau.debit +
     episy.debit;
 
-
-  // --------------------------------------------------
-  // SGL
-  // --------------------------------------------------
 
   const sgl = {
 
@@ -1087,20 +922,16 @@ async function collecteEtStockage(env) {
       aube10: null,
 
       total: 0,
-
       erreurs: []
 
     },
-
 
     seine: {
 
       debit: null,
-
       erreurs: []
 
     },
-
 
     panneciere: {
 
@@ -1113,7 +944,6 @@ async function collecteEtStockage(env) {
       erreurs: []
 
     },
-
 
     total: 0,
 
@@ -1144,27 +974,24 @@ async function collecteEtStockage(env) {
     try {
 
       const mesure =
-        await getSGL(idPoint);
-
+        await getSGL(
+          idPoint
+        );
 
       sgl.aube[nom] =
         mesure;
 
-
       sgl.aube.total +=
         mesure.debit;
-
 
     } catch (error) {
 
       const message =
         `${idPoint} : ${error.message}`;
 
-
       sgl.aube.erreurs.push(
         message
       );
-
 
       sgl.erreurs.push(
         message
@@ -1186,29 +1013,23 @@ async function collecteEtStockage(env) {
         "Seine7"
       );
 
-
     sgl.seine.debit =
       seine7.debit;
-
 
     sgl.seine.observation =
       seine7.date;
 
-
     sgl.seine.mesure =
       seine7;
-
 
   } catch (error) {
 
     const message =
       `Seine7 : ${error.message}`;
 
-
     sgl.seine.erreurs.push(
       message
     );
-
 
     sgl.erreurs.push(
       message
@@ -1232,21 +1053,17 @@ async function collecteEtStockage(env) {
         "Pann3"
       );
 
-
     sgl.panneciere.montigny =
       pann3;
-
 
   } catch (error) {
 
     const message =
       `Pann3 : ${error.message}`;
 
-
     sgl.panneciere.erreurs.push(
       message
     );
-
 
     sgl.erreurs.push(
       message
@@ -1262,21 +1079,17 @@ async function collecteEtStockage(env) {
         "Pann8"
       );
 
-
     sgl.panneciere.corancy =
       pann8;
-
 
   } catch (error) {
 
     const message =
       `Pann8 : ${error.message}`;
 
-
     sgl.panneciere.erreurs.push(
       message
     );
-
 
     sgl.erreurs.push(
       message
@@ -1298,10 +1111,8 @@ async function collecteEtStockage(env) {
       pann3.debit -
       pann8.debit;
 
-
     sgl.panneciere.debitBrut =
       debitPanneciereBrut;
-
 
     sgl.panneciere.debitRelache =
       Math.max(
@@ -1329,12 +1140,10 @@ async function collecteEtStockage(env) {
   const maintenant =
     new Date();
 
-
   const heure =
     new Date(
       maintenant
     );
-
 
   heure.setMinutes(
     0,
@@ -1357,7 +1166,6 @@ async function collecteEtStockage(env) {
     collecte:
       maintenant.toISOString(),
 
-
     montereau: {
 
       debit:
@@ -1367,7 +1175,6 @@ async function collecteEtStockage(env) {
         montereau.dateObservation
 
     },
-
 
     episy: {
 
@@ -1379,29 +1186,26 @@ async function collecteEtStockage(env) {
 
     },
 
+    total:
+      total,
 
-    total,
-
-
-    sgl
+    sgl:
+      sgl
 
   };
 
 
   // --------------------------------------------------
-  // STOCKAGE MESURE
+  // STOCKAGE
   // --------------------------------------------------
 
   await env[
     "HYDRO-CHARTDATA"
   ].put(
-
     cle,
-
     JSON.stringify(
       mesure
     )
-
   );
 
 
@@ -1424,13 +1228,12 @@ async function collecteEtStockage(env) {
     )
   ) {
 
-    historiqueDebit =
-      [];
+    historiqueDebit = [];
 
   }
 
 
-  historiqueDebit.push({
+  const nouvelleMesure = {
 
     t:
       heure.toISOString(),
@@ -1438,7 +1241,33 @@ async function collecteEtStockage(env) {
     debit:
       total
 
-  });
+  };
+
+
+  const indexExistante =
+    historiqueDebit.findIndex(
+      m =>
+        m.t ===
+        nouvelleMesure.t
+    );
+
+
+  if (
+    indexExistante >= 0
+  ) {
+
+    historiqueDebit[
+      indexExistante
+    ] =
+      nouvelleMesure;
+
+  } else {
+
+    historiqueDebit.push(
+      nouvelleMesure
+    );
+
+  }
 
 
   const limiteDebit =
@@ -1455,19 +1284,21 @@ async function collecteEtStockage(env) {
           ).getTime() >=
           limiteDebit
       )
+      .sort(
+        (a, b) =>
+          new Date(a.t).getTime() -
+          new Date(b.t).getTime()
+      )
       .slice(-720);
 
 
   await env[
     "HYDRO-CHARTDATA"
   ].put(
-
     "debit_history",
-
     JSON.stringify(
       historiqueDebit
     )
-
   );
 
 
@@ -1486,16 +1317,13 @@ async function collecteEtStockage(env) {
       "AROME START"
     );
 
-
     await collectePrevisionsAROME(
       env
     );
 
-
     console.log(
       "AROME FIN"
     );
-
 
   } catch (error) {
 
@@ -1669,15 +1497,10 @@ async function afficherPage(env) {
 
 
   return pageAvecMesure(
-
     mesure,
-
     radar,
-
     debitGraph,
-
     previsions
-
   );
 
 }
@@ -1708,7 +1531,8 @@ Hydro Chartrettes
 
 <style>
 
-html,body{
+html,
+body {
 
   margin:0;
 
@@ -1717,26 +1541,31 @@ html,body{
   height:100%;
 
   font-family:
-    Arial,sans-serif;
+    Arial,
+    sans-serif;
 
   background:
     #f3f5f7;
 
 }
 
-body{
+body {
 
-  padding:12px;
+  padding:
+    12px;
 
 }
 
-.card{
+.card {
 
-  background:white;
+  background:
+    white;
 
-  padding:20px;
+  padding:
+    20px;
 
-  border-radius:8px;
+  border-radius:
+    8px;
 
 }
 
@@ -1781,10 +1610,8 @@ function pageAvecMesure(
   const montereau =
     mesure.montereau || {};
 
-
   const episy =
     mesure.episy || {};
-
 
   const total =
     Number(
@@ -1805,6 +1632,10 @@ function pageAvecMesure(
     );
 
 
+  // --------------------------------------------------
+  // DÉCALAGE VIGICRUES
+  // --------------------------------------------------
+
   let decalageMinutes =
     0;
 
@@ -1819,12 +1650,10 @@ function pageAvecMesure(
         montereau.observation
       );
 
-
     const dateE =
       new Date(
         episy.observation
       );
-
 
     decalageMinutes =
       Math.abs(
@@ -1840,7 +1669,7 @@ function pageAvecMesure(
 
 
   // --------------------------------------------------
-  // FORMAT DATES
+  // FORMAT DATE VIGICRUES
   // --------------------------------------------------
 
   function formatDate(date) {
@@ -1851,35 +1680,38 @@ function pageAvecMesure(
 
     }
 
+    return new Date(
+      date
+    ).toLocaleString(
+      "fr-FR",
+      {
+        timeZone:
+          "Europe/Paris",
 
-    return new Date(date)
-      .toLocaleString(
-        "fr-FR",
-        {
+        day:
+          "2-digit",
 
-          timeZone:
-            "Europe/Paris",
+        month:
+          "2-digit",
 
-          day:
-            "2-digit",
+        year:
+          "numeric",
 
-          month:
-            "2-digit",
+        hour:
+          "2-digit",
 
-          year:
-            "numeric",
+        minute:
+          "2-digit"
 
-          hour:
-            "2-digit",
-
-          minute:
-            "2-digit"
-
-        }
-      );
+      }
+    );
 
   }
 
+
+  // --------------------------------------------------
+  // FORMAT DATE SGL
+  // --------------------------------------------------
 
   function formatSGLDate(date) {
 
@@ -1892,37 +1724,38 @@ function pageAvecMesure(
 
     }
 
-
     return new Date(
       Number(date)
-    )
-      .toLocaleString(
-        "fr-FR",
-        {
+    ).toLocaleString(
+      "fr-FR",
+      {
+        timeZone:
+          "Europe/Paris",
 
-          timeZone:
-            "Europe/Paris",
+        day:
+          "2-digit",
 
-          day:
-            "2-digit",
+        month:
+          "2-digit",
 
-          month:
-            "2-digit",
+        year:
+          "numeric",
 
-          year:
-            "numeric",
+        hour:
+          "2-digit",
 
-          hour:
-            "2-digit",
+        minute:
+          "2-digit"
 
-          minute:
-            "2-digit"
-
-        }
-      );
+      }
+    );
 
   }
 
+
+  // --------------------------------------------------
+  // FORMAT DEBIT
+  // --------------------------------------------------
 
   function formatDebit(value) {
 
@@ -1938,7 +1771,6 @@ function pageAvecMesure(
 
     }
 
-
     return Number(value)
       .toFixed(1);
 
@@ -1949,8 +1781,7 @@ function pageAvecMesure(
   // BLOC SGL
   // ==================================================
 
-  let blocSGL =
-    "";
+  let blocSGL = "";
 
 
   if (sglDisponible) {
@@ -1984,8 +1815,11 @@ Débit cumulé restitué par SGL
 
 </div>
 
+
 <table
-  style="margin-top:10px"
+  style="
+    margin-top:10px
+  "
 >
 
 <tr>
@@ -2187,7 +2021,9 @@ Seine Grands Lacs
 </h2>
 
 <div class="sgl-total">
+
 —
+
 </div>
 
 <div class="subtitle">
@@ -2215,7 +2051,7 @@ ${sgl?.erreur ||
 
 
   // ==================================================
-  // GRAPHE
+  // GRAPHE DEBIT
   // ==================================================
 
   const graph =
@@ -2250,32 +2086,25 @@ Données insuffisantes
       const largeur =
         800;
 
-
       const hauteur =
         260;
-
 
       const margeGauche =
         55;
 
-
       const margeDroite =
         15;
-
 
       const margeHaut =
         15;
 
-
       const margeBas =
         30;
-
 
       const graphW =
         largeur -
         margeGauche -
         margeDroite;
-
 
       const graphH =
         hauteur -
@@ -2297,16 +2126,15 @@ Données insuffisantes
           ...valeurs
         );
 
-
       const maxDebit =
         Math.max(
           ...valeurs
         );
 
-
       const amplitude =
         Math.max(
-          maxDebit - minDebit,
+          maxDebit -
+          minDebit,
           1
         );
 
@@ -2333,7 +2161,9 @@ Données insuffisantes
                 graphH -
                 (
                   (
-                    Number(p.debit) -
+                    Number(
+                      p.debit
+                    ) -
                     minDebit
                   ) /
                   amplitude
@@ -2484,10 +2314,7 @@ ${new Date(
   // ==================================================
 
   const tableauRadar =
-
-    Array.isArray(
-      radar
-    ) &&
+    Array.isArray(radar) &&
     radar.length > 0
 
       ? `
@@ -2592,9 +2419,7 @@ Données radar indisponibles
 `;
 
 
-  // `previsions` sera utilisé pour l'affichage
-  // AROME / ARPEGE dans l'étape suivante.
-
+  // Prévisions chargées mais pas encore affichées
   void previsions;
 
 
@@ -2643,6 +2468,8 @@ body {
   width:100%;
 
   height:100%;
+
+  overflow:hidden;
 
   font-family:
     Arial,
@@ -2759,7 +2586,7 @@ body {
     bold;
 
   margin:
-    4px 0 8px 0;
+    4px 0 8px;
 
 }
 
@@ -2773,7 +2600,7 @@ body {
     bold;
 
   margin:
-    4px 0 12px 0;
+    4px 0 12px;
 
 }
 
@@ -2815,9 +2642,6 @@ td {
   border-bottom:
     1px solid #e5e5e5;
 
-  white-space:
-    nowrap;
-
 }
 
 
@@ -2839,6 +2663,9 @@ td {
 
   color:
     #777;
+
+  margin-top:
+    2px;
 
 }
 
@@ -2932,9 +2759,7 @@ td {
 }
 
 
-@media (
-  max-width: 900px
-) {
+@media (max-width: 900px) {
 
   html,
   body {
@@ -2980,14 +2805,6 @@ td {
 
   }
 
-
-  .radar-table {
-
-    overflow-x:
-      auto;
-
-  }
-
 }
 
 </style>
@@ -2996,6 +2813,7 @@ td {
 
 
 <body>
+
 
 <div class="dashboard">
 
@@ -3051,9 +2869,7 @@ Montereau + Épisy
 </div>
 
 
-<table
-  style="margin-top:10px"
->
+<table style="margin-top:10px">
 
 <tr>
 
@@ -3089,7 +2905,6 @@ ${formatDate(
 
 </td>
 
-
 <td>
 
 ${formatDebit(
@@ -3098,7 +2913,6 @@ ${formatDebit(
 m³/s
 
 </td>
-
 
 <td>
 
@@ -3126,7 +2940,6 @@ ${formatDate(
 
 </td>
 
-
 <td>
 
 ${formatDebit(
@@ -3135,7 +2948,6 @@ ${formatDebit(
 m³/s
 
 </td>
-
 
 <td>
 
@@ -3252,8 +3064,7 @@ ${graph}
     white-space:nowrap;
     z-index:10;
   "
->
-</div>
+></div>
 
 
 </div>
@@ -3265,12 +3076,11 @@ ${graph}
 <!-- RADAR -->
 <!-- ============================================== -->
 
-<div class="card card-radar">
+<div class="card">
 
 <h2>
 Précipitations cumulées radar
 </h2>
-
 
 ${tableauRadar}
 
@@ -3334,22 +3144,17 @@ ${tableauRadar}
   const largeur =
     800;
 
-
   const hauteur =
     260;
-
 
   const margeGauche =
     55;
 
-
   const margeDroite =
     15;
 
-
   const margeHaut =
     15;
-
 
   const margeBas =
     30;
@@ -3396,37 +3201,6 @@ ${tableauRadar}
     );
 
 
-  function trouverPoint(x) {
-
-    let index =
-      Math.round(
-        (
-          x -
-          margeGauche
-        ) /
-        graphW *
-        (
-          data.length -
-          1
-        )
-      );
-
-
-    index =
-      Math.max(
-        0,
-        Math.min(
-          data.length - 1,
-          index
-        )
-      );
-
-
-    return index;
-
-  }
-
-
   function afficher(index) {
 
     const p =
@@ -3450,7 +3224,9 @@ ${tableauRadar}
       graphH -
       (
         (
-          Number(p.debit) -
+          Number(
+            p.debit
+          ) -
           minDebit
         ) /
         amplitude
@@ -3500,6 +3276,7 @@ ${tableauRadar}
       ).toLocaleString(
         "fr-FR",
         {
+
           day:
             "2-digit",
 
@@ -3514,6 +3291,7 @@ ${tableauRadar}
 
           minute:
             "2-digit"
+
         }
       );
 
@@ -3646,13 +3424,11 @@ ${tableauRadar}
 
 
     tooltip.style.left =
-      left +
-      "px";
+      left + "px";
 
 
     tooltip.style.top =
-      top +
-      "px";
+      top + "px";
 
   }
 
@@ -3694,9 +3470,32 @@ ${tableauRadar}
       largeur;
 
 
-    afficher(
-      trouverPoint(x)
-    );
+    let index =
+      Math.round(
+        (
+          x -
+          margeGauche
+        ) /
+        graphW *
+        (
+          data.length -
+          1
+        )
+      );
+
+
+    index =
+      Math.max(
+        0,
+        Math.min(
+          data.length -
+          1,
+          index
+        )
+      );
+
+
+    afficher(index);
 
   }
 
@@ -3719,7 +3518,6 @@ ${tableauRadar}
 
       event.preventDefault();
 
-
       positionDepuisEvenement(
         event.touches[0]
       );
@@ -3736,7 +3534,6 @@ ${tableauRadar}
     event => {
 
       event.preventDefault();
-
 
       positionDepuisEvenement(
         event.touches[0]

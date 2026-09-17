@@ -94,15 +94,15 @@ const FORECAST_POINTS =
 // ==================================================
 // WORKER
 // ==================================================
-
 export default {
 
   async scheduled(event, env, ctx) {
 
-    const job =
-      event.cron === "*/5 * * * *"
-        ? collecteRadar(env)
-        : collecteEtStockage(env);
+    if (event.cron === "*/5 * * * *") {
+      return;
+    }
+
+    const job = collecteEtStockage(env);
 
     ctx.waitUntil(
       job.catch(error => {
@@ -114,7 +114,6 @@ export default {
     );
 
   },
-
 
   async fetch(request, env) {
 

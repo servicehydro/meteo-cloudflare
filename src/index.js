@@ -98,168 +98,39 @@ export default {
 
   async scheduled(event, env, ctx) {
 
-  let job;
+    let job;
 
-  if (event.cron === "*/5 * * * *") {
+    if (event.cron === "*/5 * * * *") {
 
-    console.log("CRON RADAR");
+      console.log("CRON RADAR");
 
-    job = collecteRadar(env);
+      job = collecteRadar(env);
 
-  } else {
+    } else {
 
-    console.log("CRON COLLECTE");
+      console.log("CRON COLLECTE");
 
-    job = collecteEtStockage(env);
+      job = collecteEtStockage(env);
 
-  }
+    }
 
-  ctx.waitUntil(
-    job.catch(error => {
+    ctx.waitUntil(
+      job.catch(error => {
 
-      console.error(
-        "Erreur Cron :",
-        error.message
-      );
+        console.error(
+          "Erreur Cron :",
+          error.message
+        );
 
-    })
-  );
+      })
+    );
 
-},
+  },
 
   async fetch(request, env) {
 
     const url = new URL(request.url);
 
-if (url.pathname === "/test-sgl") {
-
-  const points = [
-    "Aube5",
-    "Aube6",
-    "Aube7",
-    "Aube10",
-    "Seine7",
-    "Pann3",
-    "Pann8"
-  ];
-
-  const resultats =
-    await Promise.all(
-      points.map(async point => {
-
-        try {
-
-          const mesure =
-            await getSGL(point);
-
-          return {
-            point: point,
-            ok: true,
-            mesure: mesure
-          };
-
-        } catch (error) {
-
-          return {
-            point: point,
-            ok: false,
-            erreur: error.message
-          };
-
-        }
-
-      })
-    );
-
-  return new Response(
-    JSON.stringify(resultats, null, 2),
-    {
-      headers: {
-        "content-type":
-          "application/json; charset=UTF-8"
-      }
-    }
-  );
-
-}
-    if (url.pathname === "/test-collecte") {
-
-  try {
-
-    await collecteEtStockage(env);
-
-    return new Response(
-      JSON.stringify({
-        ok: true,
-        message: "collecteEtStockage OK"
-      }, null, 2),
-      {
-        headers: {
-          "content-type":
-            "application/json; charset=UTF-8"
-        }
-      }
-    );
-
-  } catch (error) {
-
-    return new Response(
-      JSON.stringify({
-        ok: false,
-        erreur: error.message,
-        stack: error.stack
-      }, null, 2),
-      {
-        status: 500,
-        headers: {
-          "content-type":
-            "application/json; charset=UTF-8"
-        }
-      }
-    );
-
-  }
-
-}
-if (url.pathname === "/test-radar") {
-
-  try {
-
-    await collecteRadar(env);
-
-    return new Response(
-      JSON.stringify({
-        ok: true,
-        message: "collecteRadar exécutée sans erreur"
-      }, null, 2),
-      {
-        headers: {
-          "content-type":
-            "application/json; charset=UTF-8"
-        }
-      }
-    );
-
-  } catch (error) {
-
-    return new Response(
-      JSON.stringify({
-        ok: false,
-        erreur: error.message,
-        stack: error.stack
-      }, null, 2),
-      {
-        status: 500,
-        headers: {
-          "content-type":
-            "application/json; charset=UTF-8"
-        }
-      }
-    );
-
-  }
-
-}
     try {
 
       return new Response(
@@ -1019,6 +890,8 @@ async function getSGL(idPoint) {
   };
 
 }
+
+
 // ==================================================
 // COLLECTE VIGICRUES + SGL
 // ==================================================
@@ -2254,10 +2127,12 @@ Données insuffisantes
           ...valeurs
         );
 
+
       const maxDebit =
         Math.max(
           ...valeurs
         );
+
 
       const amplitude =
         Math.max(

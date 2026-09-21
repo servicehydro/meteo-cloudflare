@@ -2558,7 +2558,7 @@ body {
     1fr 1fr;
 
   grid-template-rows:
-    auto 1fr auto 1fr;
+   auto auto auto 1fr;
 
   grid-template-areas:
     "header header"

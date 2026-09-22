@@ -3065,12 +3065,15 @@ const trouverPoint =
     liste.find(
       point => point.nom === nom
     );
-
 const tableauPrevisions =
-  radar.length > 0
+  (pointsAROME.length > 0 || pointsARPEGE.length > 0)
     ? `
 
 <div class="radar-table">
+
+<h2>
+Précipitations prévues
+</h2>
 
 <table>
 
@@ -3089,10 +3092,6 @@ Point
 </th>
 
 <th>
-Radar 24 h
-</th>
-
-<th>
 AROME 48 h
 </th>
 
@@ -3102,7 +3101,8 @@ ARPEGE 4 j
 
 </tr>
 
-${radar.map(
+
+${RADAR_POINTS.map(
   point => {
 
     const arome =
@@ -3134,19 +3134,15 @@ ${point.nom}
 </td>
 
 <td>
-${point["24 h"]?.toFixed(1) ?? "—"} mm
-</td>
-
-<td>
 ${arome?.pluie_mm != null
-  ? Number(arome.pluie_mm).toFixed(1)
-  : "—"} mm
+  ? Number(arome.pluie_mm).toFixed(1) + " mm"
+  : "—"}
 </td>
 
 <td>
 ${arpege?.pluie_mm != null
-  ? Number(arpege.pluie_mm).toFixed(1)
-  : "—"} mm
+  ? Number(arpege.pluie_mm).toFixed(1) + " mm"
+  : "—"}
 </td>
 
 </tr>
@@ -3165,7 +3161,7 @@ ${arpege?.pluie_mm != null
 
 <div class="placeholder">
 
-Données de précipitations indisponibles
+Prévisions de précipitations indisponibles
 
 </div>
 

@@ -3140,11 +3140,11 @@ ${
 </td>
 
 <td>
-${
-  arpege?.pluie_mm != null
-    ? Number(arpege.pluie_mm).toFixed(1)
-    : "—"
-} mm
+<td>
+${arpege
+  ? JSON.stringify(arpege)
+  : "PAS DE POINT"}
+</td>
 </td>
 
 </tr>

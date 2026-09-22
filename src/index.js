@@ -788,7 +788,7 @@ async function collectePrevisionsARPEGE(env) {
     "?service=WCS&version=2.0.1&language=fre",
     {
       headers: {
-        apikey: env.METEOFRANCE_API_KEY
+        apikey: env.METEOFRANCE_ARPEGE_API_KEY
       }
     }
   );
@@ -942,7 +942,7 @@ async function collectePrevisionsARPEGE(env) {
       {
         headers: {
           apikey:
-            env.METEOFRANCE_API_KEY
+            env.METEOFRANCE_ARPEGE_API_KEY
         }
       }
     );

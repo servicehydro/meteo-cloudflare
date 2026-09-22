@@ -1058,7 +1058,10 @@ async function collectePrevisionsARPEGE(env) {
 
   previsions.updated =
     new Date().toISOString();
-
+console.log(
+  "ARPEGE POINTS :",
+  JSON.stringify(points)
+);
   await env.RADAR_KV.put(
     "forecast_rain",
     JSON.stringify(

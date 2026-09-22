@@ -3066,8 +3066,27 @@ const trouverPoint =
       point => point.nom === nom
     );
 
+const pointsAROME =
+  previsions &&
+  Array.isArray(previsions.points)
+    ? previsions.points
+    : [];
+
+const pointsARPEGE =
+  previsions &&
+  previsions.arpege &&
+  Array.isArray(previsions.arpege.points)
+    ? previsions.arpege.points
+    : [];
+
+const trouverPoint =
+  (liste, nom) =>
+    liste.find(
+      point => point.nom === nom
+    );
+
 const tableauPrevisions =
-  radar.length > 0
+  (pointsAROME.length > 0 || pointsARPEGE.length > 0)
     ? `
 
 <div class="radar-table">
@@ -3076,116 +3095,29 @@ const tableauPrevisions =
 
 <tr>
 
-<th>
-Bassin
-</th>
-
-<th>
-Position
-</th>
-
-<th>
-Point
-</th>
-
-<th>
-Radar 24 h
-</th>
-
-<th>
-AROME 48 h
-</th>
-
-<th>
-ARPEGE 4 j
-</th>
-
-</tr>
-
-
-${radar.map(
-  point => {
-
-    const arome =
-      trouverPoint(
-        pointsAROME,
-        point.nom
-      );
-
-    const arpege =
-      trouverPoint(
-        pointsARPEGE,
-        point.nom
-      );
-
-    return `
-
-<tr>
-
-<td>
-${point.bassin}
-</td>
-
-<td>
-${point.position}
-</td>
-
-<td>
-${point.nom}
-</td>
-
-<td>
-${point["24 h"]?.toFixed(1) ?? "—"} mm
-</td>
-
-<td>
-${arome?.pluie_mm != null
-  ? Number(arome.pluie_mm).toFixed(1)
-  : "—"} mm
-</td>
-
-<td>
-${arpege?.pluie_mm != null
-  ? Number(arpege.pluie_mm).toFixed(1)
-  : "—"} mm
-</td>
-
-</tr>
-
-`;
-
-  }
-).join("")}
-
-</table>
-
-</div>
-
-`
-    : `
-
-<div class="placeholder">
-
-Données de précipitations indisponibles
-
-</div>
-
-`;
-
-<h2>
-Précipitations prévues — AROME 48 h
-</h2>
-
-<table>
-
-<tr>
 <th>Bassin</th>
 <th>Position</th>
 <th>Point</th>
-<th>48 h</th>
+<th>AROME 48 h</th>
+<th>ARPEGE 4 j</th>
+
 </tr>
 
-${previsions.points.map(point => `
+${RADAR_POINTS.map(point => {
+
+  const arome =
+    trouverPoint(
+      pointsAROME,
+      point.nom
+    );
+
+  const arpege =
+    trouverPoint(
+      pointsARPEGE,
+      point.nom
+    );
+
+  return `
 
 <tr>
 
@@ -3196,30 +3128,37 @@ ${previsions.points.map(point => `
 <td>${point.nom}</td>
 
 <td>
-${point.pluie_mm !== null
-  ? Number(point.pluie_mm).toFixed(1) + " mm"
+${arome?.pluie_mm != null
+  ? Number(arome.pluie_mm).toFixed(1) + " mm"
+  : "—"}
+</td>
+
+<td>
+${arpege?.pluie_mm != null
+  ? Number(arpege.pluie_mm).toFixed(1) + " mm"
   : "—"}
 </td>
 
 </tr>
 
-`).join("")}
+`;
+
+}).join("")}
 
 </table>
+
+</div>
 
 `
     : `
 
-<h2>
-Précipitations prévues — AROME 48 h
-</h2>
-
 <div class="placeholder">
-Données AROME indisponibles
+
+Données de prévisions indisponibles
+
 </div>
 
 `;
-
 
   // ==================================================
   // PAGE

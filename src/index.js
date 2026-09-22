@@ -1926,14 +1926,13 @@ async function collecteEtStockage(env) {
   );
 
 
-  // --------------------------------------------------
+   // --------------------------------------------------
   // AROME
   // --------------------------------------------------
 
   console.log(
     "AVANT AROME"
   );
-
 
   try {
 
@@ -1958,9 +1957,39 @@ async function collecteEtStockage(env) {
 
   }
 
+
+  // --------------------------------------------------
+  // ARPEGE
+  // --------------------------------------------------
+
+  console.log(
+    "AVANT ARPEGE"
+  );
+
+  try {
+
+    console.log(
+      "ARPEGE START"
+    );
+
+    await collectePrevisionsARPEGE(
+      env
+    );
+
+    console.log(
+      "ARPEGE FIN"
+    );
+
+  } catch (error) {
+
+    console.log(
+      "ERREUR ARPEGE",
+      error.message
+    );
+
+  }
+
 }
-
-
 // ==================================================
 // AFFICHAGE
 // ==================================================

@@ -768,7 +768,627 @@ async function collectePrevisionsAROME(env) {
   );
 
 }
+// ==================================================
+// ARPEGE
+// ==================================================
 
+async function collectePrevisionsARPEGE(env) {
+
+  const BASE =
+    "https://public-api.meteofrance.fr/public/arpege/wcs/" +
+    "MF-NWP-GLOBAL-ARPEGE-01-EUROPE-WCS";
+
+  // --------------------------------------------------
+  // Récupération du dernier P4D disponible
+  // --------------------------------------------------
+
+  const capResponse = await fetch(
+    BASE +
+    "/GetCapabilities" +
+    "?service=WCS&version=2.0.1&language=fre",
+    {
+      headers: {
+        apikey: env.METEOFRANCE_API_KEY
+      }
+    }
+  );
+
+  const catalogue = await capResponse.text();
+
+  console.log(
+    "ARPEGE GetCapabilities",
+    capResponse.status
+  );
+
+  if (!capResponse.ok) {
+    throw new Error(
+      `ARPEGE GetCapabilities ${capResponse.status}: ${catalogue}`
+    );
+  }
+
+  const regex =
+    /<wcs:CoverageId>(TOTAL_WATER_PRECIPITATION__GROUND_OR_WATER_SURFACE___(\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}Z)_P4D)<\/wcs:CoverageId>/g;
+
+  const couvertures = [];
+
+  for (const match of catalogue.matchAll(regex)) {
+
+    couvertures.push({
+      coverageId: match[1],
+      run: match[2]
+    });
+
+  }
+
+  if (!couvertures.length) {
+    throw new Error(
+      "Aucun coverage ARPEGE P4D disponible"
+    );
+  }
+
+  couvertures.sort(
+    (a, b) =>
+      a.run.localeCompare(b.run)
+  );
+
+  const dernier =
+    couvertures[couvertures.length - 1];
+
+  // --------------------------------------------------
+  // Échéance +96 h
+  // --------------------------------------------------
+
+  const runIso =
+    dernier.run.replace(
+      /^(.*T\d{2})\.(\d{2})\.(\d{2})Z$/,
+      "$1:$2:$3Z"
+    );
+
+  const echeance =
+    new Date(
+      new Date(runIso).getTime() +
+      96 * 60 * 60 * 1000
+    )
+      .toISOString()
+      .replace(".000Z", "Z");
+
+  // --------------------------------------------------
+  // Emprise autour des 9 points
+  // --------------------------------------------------
+
+  const latMin =
+    Math.floor(
+      Math.min(
+        ...FORECAST_POINTS.map(
+          p => p.latitude
+        )
+      ) * 10
+    ) / 10;
+
+  const latMax =
+    Math.ceil(
+      Math.max(
+        ...FORECAST_POINTS.map(
+          p => p.latitude
+        )
+      ) * 10
+    ) / 10;
+
+  const lonMin =
+    Math.floor(
+      Math.min(
+        ...FORECAST_POINTS.map(
+          p => p.longitude
+        )
+      ) * 10
+    ) / 10;
+
+  const lonMax =
+    Math.ceil(
+      Math.max(
+        ...FORECAST_POINTS.map(
+          p => p.longitude
+        )
+      ) * 10
+    ) / 10;
+
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    "service",
+    "WCS"
+  );
+
+  params.set(
+    "version",
+    "2.0.1"
+  );
+
+  params.set(
+    "coverageId",
+    dernier.coverageId
+  );
+
+  params.set(
+    "format",
+    "image/tiff"
+  );
+
+  params.append(
+    "subset",
+    `long(${lonMin},${lonMax})`
+  );
+
+  params.append(
+    "subset",
+    `lat(${latMin},${latMax})`
+  );
+
+  params.append(
+    "subset",
+    `time(${echeance})`
+  );
+
+  // --------------------------------------------------
+  // Téléchargement TIFF
+  // --------------------------------------------------
+
+  const response =
+    await fetch(
+      BASE +
+      "/GetCoverage?" +
+      params.toString(),
+      {
+        headers: {
+          apikey:
+            env.METEOFRANCE_API_KEY
+        }
+      }
+    );
+
+  const buffer =
+    await response.arrayBuffer();
+
+  if (!response.ok) {
+    throw new Error(
+      `ARPEGE GetCoverage ${response.status}: ` +
+      new TextDecoder().decode(buffer)
+    );
+  }
+
+  // --------------------------------------------------
+  // Lecture du TIFF ARPEGE
+  // --------------------------------------------------
+
+  const tiff =
+    lireTIFFARPEGE(buffer);
+
+  // --------------------------------------------------
+  // Extraction des 9 points
+  // --------------------------------------------------
+
+  const points =
+    FORECAST_POINTS.map(point => {
+
+      let colonne =
+        Math.round(
+          (
+            point.longitude -
+            tiff.origineLon
+          ) /
+          tiff.pixelSizeX
+        );
+
+      let ligne =
+        Math.round(
+          (
+            tiff.origineLat -
+            point.latitude
+          ) /
+          tiff.pixelSizeY
+        );
+
+      colonne =
+        Math.max(
+          0,
+          Math.min(
+            tiff.width - 1,
+            colonne
+          )
+        );
+
+      ligne =
+        Math.max(
+          0,
+          Math.min(
+            tiff.height - 1,
+            ligne
+          )
+        );
+
+      const index =
+        ligne *
+        tiff.width +
+        colonne;
+
+      const valeur =
+        tiff.valeurs[index];
+
+      return {
+        nom: point.nom,
+        bassin: point.bassin,
+        position: point.position,
+        pluie_mm:
+          Number.isFinite(valeur)
+            ? Math.round(
+                valeur * 10
+              ) / 10
+            : null
+      };
+
+    });
+
+  console.log(
+    "ARPEGE OK",
+    dernier.run,
+    echeance,
+    points
+  );
+
+  // --------------------------------------------------
+  // Stockage
+  // --------------------------------------------------
+
+  const ancien =
+    await env.RADAR_KV.get(
+      "forecast_rain",
+      "json"
+    );
+
+  const previsions =
+    ancien || {};
+
+  previsions.arpege = {
+    modele: "ARPEGE",
+    run: dernier.run,
+    echeance_96h: echeance,
+    points
+  };
+
+  previsions.updated =
+    new Date().toISOString();
+
+  await env.RADAR_KV.put(
+    "forecast_rain",
+    JSON.stringify(
+      previsions
+    )
+  );
+}
+
+
+// ==================================================
+// LECTEUR TIFF ARPEGE
+// ==================================================
+
+function lireTIFFARPEGE(buffer) {
+
+  const data =
+    new DataView(buffer);
+
+  // TIFF little endian
+  const littleEndian =
+    data.getUint16(0, true) === 0x4949;
+
+  if (!littleEndian) {
+    throw new Error(
+      "TIFF ARPEGE non little-endian"
+    );
+  }
+
+  if (
+    data.getUint16(2, true) !== 42
+  ) {
+    throw new Error(
+      "TIFF ARPEGE invalide"
+    );
+  }
+
+  const ifdOffset =
+    data.getUint32(4, true);
+
+  const nombreTags =
+    data.getUint16(
+      ifdOffset,
+      true
+    );
+
+  const tags = {};
+
+  for (
+    let i = 0;
+    i < nombreTags;
+    i++
+  ) {
+
+    const offset =
+      ifdOffset +
+      2 +
+      i * 12;
+
+    const tag =
+      data.getUint16(
+        offset,
+        true
+      );
+
+    const type =
+      data.getUint16(
+        offset + 2,
+        true
+      );
+
+    const count =
+      data.getUint32(
+        offset + 4,
+        true
+      );
+
+    const tailleType = {
+      1: 1,
+      2: 1,
+      3: 2,
+      4: 4,
+      5: 8,
+      12: 8
+    }[type];
+
+    if (!tailleType) {
+      continue;
+    }
+
+    const taille =
+      tailleType * count;
+
+    let position;
+
+    if (taille <= 4) {
+      position =
+        offset + 8;
+    } else {
+      position =
+        data.getUint32(
+          offset + 8,
+          true
+        );
+    }
+
+    if (
+      tag === 256 ||
+      tag === 257 ||
+      tag === 273 ||
+      tag === 278 ||
+      tag === 279 ||
+      tag === 339
+    ) {
+
+      tags[tag] =
+        lireValeursTIFF(
+          data,
+          position,
+          type,
+          count
+        );
+
+    }
+
+    if (
+      tag === 33550 ||
+      tag === 33922
+    ) {
+
+      tags[tag] =
+        lireValeursTIFF(
+          data,
+          position,
+          type,
+          count
+        );
+
+    }
+
+  }
+
+  const width =
+    Number(
+      Array.isArray(tags[256])
+        ? tags[256][0]
+        : tags[256]
+    );
+
+  const height =
+    Number(
+      Array.isArray(tags[257])
+        ? tags[257][0]
+        : tags[257]
+    );
+
+  const stripOffset =
+    Number(
+      Array.isArray(tags[273])
+        ? tags[273][0]
+        : tags[273]
+    );
+
+  const bitsPerSample =
+    Number(
+      Array.isArray(tags[258])
+        ? tags[258][0]
+        : tags[258] || 64
+    );
+
+  const sampleFormat =
+    Number(
+      Array.isArray(tags[339])
+        ? tags[339][0]
+        : tags[339] || 3
+    );
+
+  if (
+    bitsPerSample !== 64 ||
+    sampleFormat !== 3
+  ) {
+    throw new Error(
+      `Format TIFF ARPEGE inattendu : ` +
+      `${bitsPerSample} bits / format ${sampleFormat}`
+    );
+  }
+
+  const pixelScale =
+    tags[33550];
+
+  const tiepoint =
+    tags[33922];
+
+  if (
+    !pixelScale ||
+    !tiepoint
+  ) {
+    throw new Error(
+      "Géoréférencement TIFF ARPEGE absent"
+    );
+  }
+
+  const pixelSizeX =
+    Number(pixelScale[0]);
+
+  const pixelSizeY =
+    Number(pixelScale[1]);
+
+  const origineLon =
+    Number(tiepoint[3]);
+
+  const origineLat =
+    Number(tiepoint[4]);
+
+  const nombrePixels =
+    width * height;
+
+  const valeurs =
+    new Float64Array(
+      nombrePixels
+    );
+
+  for (
+    let i = 0;
+    i < nombrePixels;
+    i++
+  ) {
+
+    valeurs[i] =
+      data.getFloat64(
+        stripOffset +
+        i * 8,
+        true
+      );
+
+  }
+
+  return {
+    width,
+    height,
+    pixelSizeX,
+    pixelSizeY,
+    origineLon,
+    origineLat,
+    valeurs
+  };
+}
+
+
+// ==================================================
+// LECTURE VALEURS TIFF
+// ==================================================
+
+function lireValeursTIFF(
+  data,
+  position,
+  type,
+  count
+) {
+
+  const valeurs = [];
+
+  for (
+    let i = 0;
+    i < count;
+    i++
+  ) {
+
+    if (type === 3) {
+
+      valeurs.push(
+        data.getUint16(
+          position + i * 2,
+          true
+        )
+      );
+
+    } else if (type === 4) {
+
+      valeurs.push(
+        data.getUint32(
+          position + i * 4,
+          true
+        )
+      );
+
+    } else if (type === 5) {
+
+      const num =
+        data.getUint32(
+          position + i * 8,
+          true
+        );
+
+      const den =
+        data.getUint32(
+          position +
+          i * 8 +
+          4,
+          true
+        );
+
+      valeurs.push(
+        den
+          ? num / den
+          : 0
+      );
+
+    } else if (type === 12) {
+
+      valeurs.push(
+        data.getFloat64(
+          position + i * 8,
+          true
+        )
+      );
+
+    } else if (type === 1) {
+
+      valeurs.push(
+        data.getUint8(
+          position + i
+        )
+      );
+
+    }
+
+  }
+
+  return valeurs;
+}
 
 // ==================================================
 // VIGICRUES

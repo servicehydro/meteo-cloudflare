@@ -3088,9 +3088,6 @@ Position
 Point
 </th>
 
-<th>
-Radar 24 h
-</th>
 
 <th>
 AROME 48 h
@@ -3133,9 +3130,6 @@ ${point.position}
 ${point.nom}
 </td>
 
-<td>
-${point["24 h"]?.toFixed(1) ?? "—"} mm
-</td>
 
 <td>
 ${

@@ -3066,8 +3066,27 @@ const trouverPoint =
       point => point.nom === nom
     );
 
+const pointsAROME =
+  previsions &&
+  Array.isArray(previsions.points)
+    ? previsions.points
+    : [];
+
+const pointsARPEGE =
+  previsions &&
+  previsions.arpege &&
+  Array.isArray(previsions.arpege.points)
+    ? previsions.arpege.points
+    : [];
+
+const trouverPoint =
+  (liste, nom) =>
+    liste.find(
+      point => point.nom === nom
+    );
+
 const tableauPrevisions =
-  radar.length > 0
+  (pointsAROME.length > 0 || pointsARPEGE.length > 0)
     ? `
 
 <div class="radar-table">
@@ -3076,83 +3095,67 @@ const tableauPrevisions =
 
 <tr>
 
-<th>
-Bassin
-</th>
-
-<th>
-Position
-</th>
-
-<th>
-Point
-</th>
-
-
-<th>
-AROME 48 h
-</th>
-
-<th>
-ARPEGE 4 j
-</th>
+<th>Bassin</th>
+<th>Position</th>
+<th>Point</th>
+<th>Radar 24 h</th>
+<th>AROME 48 h</th>
+<th>ARPEGE 4 j</th>
 
 </tr>
 
-${radar.map(
-  point => {
+${RADAR_POINTS.map(point => {
 
-    const arome =
-      trouverPoint(
-        pointsAROME,
-        point.nom
-      );
+  const radarPoint =
+    radar.find(
+      r => r.nom === point.nom
+    );
 
-    const arpege =
-      trouverPoint(
-        pointsARPEGE,
-        point.nom
-      );
+  const arome =
+    trouverPoint(
+      pointsAROME,
+      point.nom
+    );
 
-    return `
+  const arpege =
+    trouverPoint(
+      pointsARPEGE,
+      point.nom
+    );
+
+  return `
 
 <tr>
 
+<td>${point.bassin}</td>
+
+<td>${point.position}</td>
+
+<td>${point.nom}</td>
+
 <td>
-${point.bassin}
+${radarPoint?.["24 h"] != null
+  ? Number(radarPoint["24 h"]).toFixed(1) + " mm"
+  : "—"}
 </td>
 
 <td>
-${point.position}
+${arome?.pluie_mm != null
+  ? Number(arome.pluie_mm).toFixed(1) + " mm"
+  : "—"}
 </td>
 
 <td>
-${point.nom}
-</td>
-
-
-<td>
-${
-  arome?.pluie_mm != null
-    ? Number(arome.pluie_mm).toFixed(1)
-    : "—"
-} mm
-</td>
-
-<td>
-<td>
-${arpege
-  ? JSON.stringify(arpege)
-  : "PAS DE POINT"}
-</td>
+${arpege?.pluie_mm != null
+  ? Number(arpege.pluie_mm).toFixed(1) + " mm"
+  : "—"}
 </td>
 
 </tr>
 
 `;
 
-  }
-).join("")}
+}).join("")}
 
 </table>
 

@@ -3042,29 +3042,10 @@ Données radar indisponibles
 `;
 
 
-  // Prévisions chargées mais pas encore affichées
+ // Prévisions chargées mais pas encore affichées
 // ==================================================
 // TABLEAU PLUIE : RADAR + AROME + ARPEGE
 // ==================================================
-
-const pointsAROME =
-  previsions &&
-  Array.isArray(previsions.points)
-    ? previsions.points
-    : [];
-
-const pointsARPEGE =
-  previsions &&
-  previsions.arpege &&
-  Array.isArray(previsions.arpege.points)
-    ? previsions.arpege.points
-    : [];
-
-const trouverPoint =
-  (liste, nom) =>
-    liste.find(
-      point => point.nom === nom
-    );
 
 const pointsAROME =
   previsions &&
@@ -3120,7 +3101,6 @@ ARPEGE 4 j
 </th>
 
 </tr>
-
 
 ${radar.map(
   point => {

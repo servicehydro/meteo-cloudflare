@@ -3086,7 +3086,7 @@ const trouverPoint =
     );
 
 const tableauPrevisions =
-  (pointsAROME.length > 0 || pointsARPEGE.length > 0)
+  radar.length > 0
     ? `
 
 <div class="radar-table">
@@ -3095,67 +3095,86 @@ const tableauPrevisions =
 
 <tr>
 
-<th>Bassin</th>
-<th>Position</th>
-<th>Point</th>
-<th>Radar 24 h</th>
-<th>AROME 48 h</th>
-<th>ARPEGE 4 j</th>
+<th>
+Bassin
+</th>
+
+<th>
+Position
+</th>
+
+<th>
+Point
+</th>
+
+<th>
+Radar 24 h
+</th>
+
+<th>
+AROME 48 h
+</th>
+
+<th>
+ARPEGE 4 j
+</th>
 
 </tr>
 
-${RADAR_POINTS.map(point => {
 
-  const radarPoint =
-    radar.find(
-      r => r.nom === point.nom
-    );
+${radar.map(
+  point => {
 
-  const arome =
-    trouverPoint(
-      pointsAROME,
-      point.nom
-    );
+    const arome =
+      trouverPoint(
+        pointsAROME,
+        point.nom
+      );
 
-  const arpege =
-    trouverPoint(
-      pointsARPEGE,
-      point.nom
-    );
+    const arpege =
+      trouverPoint(
+        pointsARPEGE,
+        point.nom
+      );
 
-  return `
+    return `
 
 <tr>
 
-<td>${point.bassin}</td>
-
-<td>${point.position}</td>
-
-<td>${point.nom}</td>
+<td>
+${point.bassin}
+</td>
 
 <td>
-${radarPoint?.["24 h"] != null
-  ? Number(radarPoint["24 h"]).toFixed(1) + " mm"
-  : "—"}
+${point.position}
+</td>
+
+<td>
+${point.nom}
+</td>
+
+<td>
+${point["24 h"]?.toFixed(1) ?? "—"} mm
 </td>
 
 <td>
 ${arome?.pluie_mm != null
-  ? Number(arome.pluie_mm).toFixed(1) + " mm"
-  : "—"}
+  ? Number(arome.pluie_mm).toFixed(1)
+  : "—"} mm
 </td>
 
 <td>
 ${arpege?.pluie_mm != null
-  ? Number(arpege.pluie_mm).toFixed(1) + " mm"
-  : "—"}
+  ? Number(arpege.pluie_mm).toFixed(1)
+  : "—"} mm
 </td>
 
 </tr>
 
 `;
 
-}).join("")}
+  }
+).join("")}
 
 </table>
 

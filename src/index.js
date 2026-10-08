@@ -96,16 +96,41 @@ const FORECAST_POINTS =
 // ==================================================
 export default {
 
-  async scheduled(event, env, ctx) {
+async scheduled(event, env, ctx) {
 
-    let job;
+  // --------------------------------------------------
+  // RADAR : toutes les 10 minutes
+  // --------------------------------------------------
 
-console.log("CRON COLLECTE");
+  if (event.cron === "*/10 * * * *") {
 
-job = collecteEtStockage(env);
+    console.log("CRON RADAR");
 
     ctx.waitUntil(
-      job.catch(error => {
+      collecteRadar(env).catch(error => {
+
+        console.error(
+          "Erreur Cron Radar :",
+          error.message
+        );
+
+      })
+    );
+
+    return;
+  }
+
+
+  // --------------------------------------------------
+  // COLLECTE GENERALE : toutes les heures
+  // --------------------------------------------------
+
+  if (event.cron === "0 * * * *") {
+
+    console.log("CRON COLLECTE");
+
+    ctx.waitUntil(
+      collecteEtStockage(env).catch(error => {
 
         console.error(
           "Erreur Cron :",
@@ -115,7 +140,9 @@ job = collecteEtStockage(env);
       })
     );
 
-  },
+  }
+
+},
 
   async fetch(request, env) {
 
@@ -267,7 +294,7 @@ async function collecteRadar(env) {
 
         }
 
-        return valeurBrute * 0.01;
+        return valeurBrute * 0.01*2;
 
       }
     );
@@ -2003,37 +2030,7 @@ async function collecteEtStockage(env) {
       historiqueSaintFargeau
     )
   );
-  // --------------------------------------------------
-  // RADAR
-  // --------------------------------------------------
-
-  console.log(
-    "AVANT RADAR"
-  );
-
-  try {
-
-    console.log(
-      "RADAR START"
-    );
-
-    await collecteRadar(
-      env
-    );
-
-    console.log(
-      "RADAR FIN"
-    );
-
-  } catch (error) {
-
-    console.log(
-      "ERREUR RADAR",
-      error.message
-    );
-
-  }
-
+ 
 
   // --------------------------------------------------
   // AROME

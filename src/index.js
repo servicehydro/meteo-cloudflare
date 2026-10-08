@@ -4168,9 +4168,97 @@ ${blocSGL}
 <!-- ============================================== -->
 <div class="card graph-card">
 
-<h2>
-Débits — 30 derniers jours
+<div
+  style="
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  "
+>
+
+<h2 style="margin:0;">
+Débits
 </h2>
+
+
+<div
+  style="
+    display:flex;
+    gap:5px;
+    flex-wrap:wrap;
+  "
+>
+
+
+<a
+  href="?periode=2j"
+  style="
+    padding:5px 10px;
+    border-radius:5px;
+    text-decoration:none;
+    font-size:12px;
+    border:1px solid #ccc;
+    background:${periode === "2j" ? "#1976d2" : "#f5f5f5"};
+    color:${periode === "2j" ? "white" : "#333"};
+  "
+>
+2 j
+</a>
+
+
+<a
+  href="?periode=5j"
+  style="
+    padding:5px 10px;
+    border-radius:5px;
+    text-decoration:none;
+    font-size:12px;
+    border:1px solid #ccc;
+    background:${periode === "5j" ? "#1976d2" : "#f5f5f5"};
+    color:${periode === "5j" ? "white" : "#333"};
+  "
+>
+5 j
+</a>
+
+
+<a
+  href="?periode=15j"
+  style="
+    padding:5px 10px;
+    border-radius:5px;
+    text-decoration:none;
+    font-size:12px;
+    border:1px solid #ccc;
+    background:${periode === "15j" ? "#1976d2" : "#f5f5f5"};
+    color:${periode === "15j" ? "white" : "#333"};
+  "
+>
+15 j
+</a>
+
+
+<a
+  href="?periode=tout"
+  style="
+    padding:5px 10px;
+    border-radius:5px;
+    text-decoration:none;
+    font-size:12px;
+    border:1px solid #ccc;
+    background:${periode === "tout" ? "#1976d2" : "#f5f5f5"};
+    color:${periode === "tout" ? "white" : "#333"};
+  "
+>
+Tout
+</a>
+
+
+</div>
+
+</div>
 
 
 <div

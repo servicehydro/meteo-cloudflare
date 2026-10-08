@@ -4284,7 +4284,7 @@ Tout
   style="
     position:relative;
     width:100%;
-    height:200px;
+    height:220px;
   "
 >
 
@@ -4292,7 +4292,7 @@ Tout
   id="debitGraph"
   viewBox="0 0 800 260"
   width="100%"
-  height="260"
+  height="220"
   preserveAspectRatio="none"
   style="
     background:#f8f9fa;

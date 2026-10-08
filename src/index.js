@@ -2656,6 +2656,14 @@ function pageAvecMesure(
 Seine Grands Lacs
 </h2>
 
+<div
+  style="
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  "
+>
+
 <div class="sgl-total">
 
 ${formatDebit(
@@ -2668,6 +2676,8 @@ m³/s
 <div class="subtitle">
 
 Débit cumulé restitué par SGL
+
+</div>
 
 </div>
 
@@ -4000,9 +4010,17 @@ ${formatDate(
 <div class="card debit-card">
 
 <h2>
-Débit estimé à l'amont de Chartrettes
+Débit Vigicrue
 </h2>
 
+
+<div
+  style="
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  "
+>
 
 <div class="main-value">
 
@@ -4011,10 +4029,11 @@ m³/s
 
 </div>
 
-
 <div class="subtitle">
 
 Montereau + Épisy
+
+</div>
 
 </div>
 

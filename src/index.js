@@ -144,38 +144,47 @@ async scheduled(event, env, ctx) {
 
 },
 
-  async fetch(request, env) {
+async fetch(request, env) {
 
-    const url = new URL(request.url);
+  const url =
+    new URL(request.url);
 
-    try {
+  const periode =
+    url.searchParams.get(
+      "periode"
+    ) || "tout";
 
-      return new Response(
-        await afficherPage(env),
-        {
-          headers: {
-            "content-type":
-              "text/html; charset=UTF-8"
-          }
+  try {
+
+    return new Response(
+      await afficherPage(
+        env,
+        periode
+      ),
+      {
+        headers: {
+          "content-type":
+            "text/html; charset=UTF-8"
         }
-      );
+      }
+    );
 
-    } catch (error) {
+  } catch (error) {
 
-      return new Response(
-        `Erreur Worker : ${error.message}`,
-        {
-          status: 500,
-          headers: {
-            "content-type":
-              "text/plain; charset=UTF-8"
-          }
+    return new Response(
+      `Erreur Worker : ${error.message}`,
+      {
+        status: 500,
+        headers: {
+          "content-type":
+            "text/plain; charset=UTF-8"
         }
-      );
-
-    }
+      }
+    );
 
   }
+
+}
 
 };
 
@@ -2101,7 +2110,10 @@ async function collecteEtStockage(env) {
 // AFFICHAGE
 // ==================================================
 
-async function afficherPage(env) {
+async function afficherPage(
+  env,
+  periode = "tout"
+) {
 
   const liste =
     await env[
@@ -2237,34 +2249,95 @@ async function afficherPage(env) {
     );
 
 
-  const debitGraph =
-    Array.isArray(
-      historiqueDebit
-    )
-      ? historiqueDebit
-      : [];
+  const debitGraphComplet =
+  Array.isArray(
+    historiqueDebit
+  )
+    ? historiqueDebit
+    : [];
 
 
-  // --------------------------------------------------
-  // HISTORIQUE SAINT-FARGEAU-PONTHIERRY
-  // --------------------------------------------------
+// --------------------------------------------------
+// HISTORIQUE SAINT-FARGEAU-PONTHIERRY
+// --------------------------------------------------
 
-  const historiqueSaintFargeau =
-    await env[
-      "HYDRO-CHARTDATA"
-    ].get(
-      "saint_fargeau_history",
-      "json"
+const historiqueSaintFargeau =
+  await env[
+    "HYDRO-CHARTDATA"
+  ].get(
+    "saint_fargeau_history",
+    "json"
+  );
+
+
+const saintFargeauGraphComplet =
+  Array.isArray(
+    historiqueSaintFargeau
+  )
+    ? historiqueSaintFargeau
+    : [];
+
+
+// --------------------------------------------------
+// FILTRE PERIODE DU GRAPHE
+// --------------------------------------------------
+
+const dureesPeriode = {
+
+  "2j":
+    2 * 24 * 60 * 60 * 1000,
+
+  "5j":
+    5 * 24 * 60 * 60 * 1000,
+
+  "15j":
+    15 * 24 * 60 * 60 * 1000
+
+};
+
+
+// Par défaut : tout l'historique disponible
+
+let debitGraph =
+  debitGraphComplet;
+
+let saintFargeauGraph =
+  saintFargeauGraphComplet;
+
+
+if (
+  dureesPeriode[periode] &&
+  debitGraphComplet.length > 0
+) {
+
+  const derniereDate =
+    new Date(
+      debitGraphComplet[
+        debitGraphComplet.length - 1
+      ].t
+    ).getTime();
+
+  const limite =
+    derniereDate -
+    dureesPeriode[periode];
+
+
+  debitGraph =
+    debitGraphComplet.filter(
+      p =>
+        new Date(p.t).getTime() >=
+        limite
     );
 
 
-  const saintFargeauGraph =
-    Array.isArray(
-      historiqueSaintFargeau
-    )
-      ? historiqueSaintFargeau
-      : [];
+  saintFargeauGraph =
+    saintFargeauGraphComplet.filter(
+      p =>
+        new Date(p.t).getTime() >=
+        limite
+    );
 
+}
 
   // --------------------------------------------------
   // PREVISIONS
@@ -2282,7 +2355,8 @@ async function afficherPage(env) {
     radar,
     debitGraph,
     saintFargeauGraph,
-    previsions
+    previsions,
+    periode
   );
 
 }

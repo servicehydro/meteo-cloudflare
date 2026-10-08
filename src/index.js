@@ -2459,7 +2459,8 @@ function pageAvecMesure(
   radar,
   debitGraph,
   saintFargeauGraph,
-  previsions
+  previsions,
+  periode = "tout"
 ) {
 
   const montereau =

@@ -1475,8 +1475,12 @@ async function getDebit(station) {
     `&GrdSerie=Q` +
     `&FormatDate=iso`;
 
-  const response =
-    await fetch(url);
+const response = await fetch(url, {
+  headers: {
+    "Accept": "application/json",
+    "User-Agent": "Mozilla/5.0 (compatible; MeteoHydroChartrettes/1.0)"
+  }
+});
 
   if (!response.ok) {
 

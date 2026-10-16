@@ -284,6 +284,50 @@ async function collecteRadar(env) {
   const cols =
     dataset.shape[1];
 
+  // DIAGNOSTIC RADAR — lecture seule
+  const rows = dataset.shape[0];
+
+  const pointsDiagnostic = [
+    { nom: "Saint-Fargeau", ligne: 1387, colonne: 1692 },
+    { nom: "Troyes", ligne: 1236, colonne: 1830 }
+  ];
+
+  console.log("DIAGNOSTIC RADAR — dimensions", {
+    rows,
+    cols,
+    horodatage: timestamp
+  });
+
+  for (const point of pointsDiagnostic) {
+    const pixels = [
+      { direction: "centre", ligne: point.ligne, colonne: point.colonne },
+      { direction: "nord", ligne: point.ligne - 1, colonne: point.colonne },
+      { direction: "sud", ligne: point.ligne + 1, colonne: point.colonne },
+      { direction: "ouest", ligne: point.ligne, colonne: point.colonne - 1 },
+      { direction: "est", ligne: point.ligne, colonne: point.colonne + 1 }
+    ];
+
+    console.log(
+      "DIAGNOSTIC RADAR — " + point.nom,
+      pixels.map(pixel => {
+        const dansGrille =
+          pixel.ligne >= 0 &&
+          pixel.ligne < rows &&
+          pixel.colonne >= 0 &&
+          pixel.colonne < cols;
+
+        return {
+          direction: pixel.direction,
+          ligne: pixel.ligne,
+          colonne: pixel.colonne,
+          valeurBrute: dansGrille
+            ? data[pixel.ligne * cols + pixel.colonne]
+            : null
+        };
+      })
+    );
+  }
+
   const pluies =
     RADAR_POINTS.map(
       point => {

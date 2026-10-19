@@ -305,10 +305,13 @@ console.log("TEST_DIAGNOSTIC_HDF5_V1");
     );
   };
 
-  console.log("DIAGNOSTIC HDF5 — racine", {
+console.log(
+  "DIAGNOSTIC HDF5 RACINE : " +
+  JSON.stringify({
     cles: file.keys(),
     attributs: resumeAttributs(file)
-  });
+  })
+);
 
   for (const chemin of ["dataset1", "dataset1/data1"]) {
     try {

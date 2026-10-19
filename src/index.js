@@ -323,9 +323,11 @@ console.log(
       });
     } catch (error) {
       console.log(
-        "DIAGNOSTIC HDF5 — groupe inaccessible",
-        chemin,
-        String(error)
+        "DIAGNOSTIC HDF5 GROUPE " + chemin + " : " +
+        JSON.stringify({
+          cles: groupe.keys(),
+          attributs: resumeAttributs(groupe)
+        })
       );
     }
   }
@@ -335,10 +337,13 @@ console.log(
       "dataset1/data1/data"
     );
 
-  console.log("DIAGNOSTIC HDF5 — dataset", {
-    metadata: dataset.metadata,
-    attributs: resumeAttributs(dataset)
-  });
+    console.log(
+      "DIAGNOSTIC HDF5 RACINE : " +
+      JSON.stringify({
+        cles: file.keys(),
+        attributs: resumeAttributs(file)
+      })
+    );
 
   const data =
     dataset.value;

@@ -343,13 +343,21 @@ console.log(
           pixel.colonne >= 0 &&
           pixel.colonne < cols;
 
+        const valeurBrute = dansGrille
+          ? data[pixel.ligne * cols + pixel.colonne]
+          : null;
+
         return {
           direction: pixel.direction,
           ligne: pixel.ligne,
           colonne: pixel.colonne,
-          valeurBrute: dansGrille
-            ? data[pixel.ligne * cols + pixel.colonne]
-            : null
+          valeurBrute,
+          pluieMm:
+            valeurBrute === null
+              ? null
+              : valeurBrute === 65535 || valeurBrute === 65534
+                ? 0
+                : valeurBrute * 0.02
         };
       })
     );

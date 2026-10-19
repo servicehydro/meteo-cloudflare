@@ -316,7 +316,7 @@ console.log(
     attributs: resumeAttributs(file)
   })
 );
-  for (const chemin of ["dataset1", "dataset1/data1"]) {
+ for (const chemin of ["where", "what", "how"]) {
     try {
       const groupe = file.get(chemin);
       console.log(

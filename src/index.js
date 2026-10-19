@@ -285,13 +285,7 @@ const resumeAttributs = objet => {
 
   return Object.fromEntries(
     Object.entries(attributs).map(([nom, attribut]) => {
-const valeur = {
-  constructeur: attribut?.constructor?.name,
-  proprietes: Object.keys(attribut ?? {}),
-  prototype: Object.getOwnPropertyNames(
-    Object.getPrototypeOf(attribut ?? {})
-  )
-};
+const valeur = attribut?.value;
 
       return [
         nom,

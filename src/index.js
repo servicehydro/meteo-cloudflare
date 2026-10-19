@@ -267,16 +267,79 @@ async function collecteRadar(env) {
     new Uint8Array(buffer)
   );
 
+ 
   const file =
     new h5wasm.File(
       "/radar.h5",
       "r"
     );
 
+  // DIAGNOSTIC HDF5 — lecture seule
+  const resumeAttributs = objet => {
+    const attributs = objet && objet.attrs
+      ? objet.attrs
+      : {};
+
+    return Object.fromEntries(
+      Object.entries(attributs).map(([nom, attribut]) => {
+        let valeur =
+          attribut &&
+          Object.prototype.hasOwnProperty.call(attribut, "value")
+            ? attribut.value
+            : attribut;
+
+        if (ArrayBuffer.isView(valeur)) {
+          valeur = Array.from(valeur).slice(0, 20);
+        } else if (Array.isArray(valeur)) {
+          valeur = valeur.slice(0, 20);
+        } else if (typeof valeur === "bigint") {
+          valeur = valeur.toString();
+        }
+
+        return [nom, {
+          valeur,
+          forme: attribut && attribut.shape,
+          type: attribut && attribut.dtype
+        }];
+      })
+    );
+  };
+
+  console.log("DIAGNOSTIC HDF5 — racine", {
+    cles: file.keys(),
+    attributs: resumeAttributs(file)
+  });
+
+  for (const chemin of ["dataset1", "dataset1/data1"]) {
+    try {
+      const groupe = file.get(chemin);
+
+      console.log("DIAGNOSTIC HDF5 — groupe " + chemin, {
+        cles: groupe.keys(),
+        attributs: resumeAttributs(groupe)
+      });
+    } catch (error) {
+      console.log(
+        "DIAGNOSTIC HDF5 — groupe inaccessible",
+        chemin,
+        String(error)
+      );
+    }
+  }
+
   const dataset =
     file.get(
       "dataset1/data1/data"
     );
+
+  console.log("DIAGNOSTIC HDF5 — dataset", {
+    metadata: dataset.metadata,
+    attributs: resumeAttributs(dataset)
+  });
+
+  const data =
+    dataset.value;
+
 
   const data =
     dataset.value;

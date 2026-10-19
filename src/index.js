@@ -3,31 +3,13 @@ import * as GeoTIFF from "geotiff";
 
 const RADAR_POINTS = [
   {
-    nom: "Montargis",
-    bassin: "Loing",
+    nom: "Troyes",
+    bassin: "Seine",
     position: "Amont",
-    latitude: 47.9978628,
-    longitude: 2.7310072,
-    ligne: 1312,
-    colonne: 1638
-  },
-  {
-    nom: "Nemours",
-    bassin: "Loing",
-    position: "Médian",
-    latitude: 48.2680260,
-    longitude: 2.6953079,
-    ligne: 1254,
-    colonne: 1630
-  },
-  {
-    nom: "Château-Landon",
-    bassin: "Loing",
-    position: "Aval",
-    latitude: 48.1496366,
-    longitude: 2.7032718,
-    ligne: 1279,
-    colonne: 1632
+    latitude: 48.2973,
+    longitude: 4.0744,
+    ligne: 1236,
+    colonne: 1830
   },
   {
     nom: "Auxerre",
@@ -39,40 +21,13 @@ const RADAR_POINTS = [
     colonne: 1763
   },
   {
-    nom: "Joigny",
-    bassin: "Yonne",
-    position: "Médian",
-    latitude: 47.9812486,
-    longitude: 3.3995767,
-    ligne: 1310,
-    colonne: 1736
-  },
-  {
-    nom: "Pont-sur-Yonne",
-    bassin: "Yonne",
-    position: "Aval",
-    latitude: 48.2852895,
-    longitude: 3.2045813,
-    ligne: 1246,
-    colonne: 1704
-  },
-  {
-    nom: "Nogent-sur-Seine",
-    bassin: "Seine",
+    nom: "Saint-Fargeau",
+    bassin: "Loing",
     position: "Amont",
-    latitude: 48.4924390,
-    longitude: 3.4978181,
-    ligne: 1199,
-    colonne: 1743
-  },
-  {
-    nom: "Montereau",
-    bassin: "Seine",
-    position: "Médian",
-    latitude: 47.8564484,
-    longitude: 2.5717138,
-    ligne: 1344,
-    colonne: 1616
+    latitude: 47.6417,
+    longitude: 3.0705,
+    ligne: 1387,
+    colonne: 1692
   },
   {
     nom: "Chartrettes",
@@ -430,7 +385,16 @@ console.log(
       "json"
     );
 
-  if (!Array.isArray(historique)) {
+  if (
+    !Array.isArray(historique) ||
+    historique.some(
+      m =>
+        !Array.isArray(m.p) ||
+        m.p.length !== RADAR_POINTS.length
+    )
+  ) {
+    // L'ancien historique utilisait 9 points.
+    // On évite de réassocier ses indices aux 4 nouveaux points.
     historique = [];
   }
 
@@ -439,12 +403,10 @@ console.log(
       m => m.t === timestamp
     )
   ) {
-
     historique.push({
       t: timestamp,
       p: pluies
     });
-
   }
 
   const limite =
@@ -455,9 +417,7 @@ console.log(
     historique
       .filter(
         m =>
-          new Date(
-            m.t
-          ).getTime() >= limite
+          new Date(m.t).getTime() >= limite
       )
       .sort(
         (a, b) =>
@@ -468,9 +428,7 @@ console.log(
 
   await env.RADAR_KV.put(
     "radar_history",
-    JSON.stringify(
-      historique
-    )
+    JSON.stringify(historique)
   );
 
   console.log(
@@ -675,7 +633,7 @@ async function collectePrevisionsAROME(env) {
 
 
   // --------------------------------------------------
-  // 5. EMPRISE DES 9 POINTS
+  // 5. EMPRISE DES 4 POINTS
   // --------------------------------------------------
 
   const latMin =
@@ -995,7 +953,7 @@ async function collectePrevisionsARPEGE(env) {
       .replace(".000Z", "Z");
 
   // --------------------------------------------------
-  // Emprise autour des 9 points
+  // Emprise autour des 4 points
   // --------------------------------------------------
 
   const latMin =

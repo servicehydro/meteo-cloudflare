@@ -273,7 +273,7 @@ async function collecteRadar(env) {
       "/radar.h5",
       "r"
     );
-
+console.log("TEST_DIAGNOSTIC_HDF5_V1");
   // DIAGNOSTIC HDF5 — lecture seule
   const resumeAttributs = objet => {
     const attributs = objet && objet.attrs

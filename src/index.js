@@ -315,8 +315,8 @@ console.log(
   const rows = dataset.shape[0];
 
   const pointsDiagnostic = [
-    { nom: "Saint-Fargeau", ligne: 1387, colonne: 1692 },
-    { nom: "Troyes", ligne: 1236, colonne: 1830 }
+  { nom: "Saint-Fargeau", ligne: 1387, colonne: 1692 },
+  { nom: "Troyes", ligne: 1235, colonne: 1829 }
   ];
 
   console.log("DIAGNOSTIC RADAR — dimensions", {

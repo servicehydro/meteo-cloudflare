@@ -307,20 +307,21 @@ console.log("TEST_DIAGNOSTIC_HDF5_V1");
 
 console.log(
   "DIAGNOSTIC HDF5 RACINE : " +
-  JSON.stringify({
+  stringifyDiagnostic({
     cles: file.keys(),
     attributs: resumeAttributs(file)
   })
 );
-
   for (const chemin of ["dataset1", "dataset1/data1"]) {
     try {
       const groupe = file.get(chemin);
-
-      console.log("DIAGNOSTIC HDF5 — groupe " + chemin, {
-        cles: groupe.keys(),
-        attributs: resumeAttributs(groupe)
-      });
+      console.log(
+        "DIAGNOSTIC HDF5 GROUPE " + chemin + " : " +
+        stringifyDiagnostic({
+          cles: groupe.keys(),
+          attributs: resumeAttributs(groupe)
+        })
+      );    
     } catch (error) {
       console.log(
         "DIAGNOSTIC HDF5 GROUPE " + chemin + " : " +
@@ -337,13 +338,13 @@ console.log(
       "dataset1/data1/data"
     );
 
-    console.log(
-      "DIAGNOSTIC HDF5 RACINE : " +
-      JSON.stringify({
-        cles: file.keys(),
-        attributs: resumeAttributs(file)
-      })
-    );
+console.log(
+  "DIAGNOSTIC HDF5 DATASET : " +
+  stringifyDiagnostic({
+    metadata: dataset.metadata,
+    attributs: resumeAttributs(dataset)
+  })
+);
 
   const data =
     dataset.value;

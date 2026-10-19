@@ -286,11 +286,7 @@ console.log("TEST_DIAGNOSTIC_HDF5_V1");
 
     return Object.fromEntries(
       Object.entries(attributs).map(([nom, attribut]) => {
-        let valeur =
-          attribut &&
-          Object.prototype.hasOwnProperty.call(attribut, "value")
-            ? attribut.value
-            : attribut;
+      let valeur = attribut?.value ?? attribut;
 
         if (ArrayBuffer.isView(valeur)) {
           valeur = Array.from(valeur).slice(0, 20);

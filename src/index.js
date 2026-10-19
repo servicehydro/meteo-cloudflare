@@ -273,6 +273,10 @@ async function collecteRadar(env) {
       "/radar.h5",
       "r"
     );
+ const stringifyDiagnostic = valeur =>
+  JSON.stringify(valeur, (_cle, v) =>
+    typeof v === "bigint" ? v.toString() : v
+  ); 
 console.log("TEST_DIAGNOSTIC_HDF5_V1");
   // DIAGNOSTIC HDF5 — lecture seule
   const resumeAttributs = objet => {

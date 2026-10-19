@@ -8,8 +8,8 @@ const RADAR_POINTS = [
     position: "Amont",
     latitude: 48.2973,
     longitude: 4.0744,
-    ligne: 1236,
-    colonne: 1830
+    ligne: 1235,
+    colonne: 1829
   },
   {
     nom: "Auxerre",

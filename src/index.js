@@ -340,10 +340,6 @@ console.log("TEST_DIAGNOSTIC_HDF5_V1");
   const data =
     dataset.value;
 
-
-  const data =
-    dataset.value;
-
   const cols =
     dataset.shape[1];
 

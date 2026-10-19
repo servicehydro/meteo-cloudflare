@@ -279,31 +279,35 @@ async function collecteRadar(env) {
   ); 
 console.log("TEST_DIAGNOSTIC_HDF5_V1");
   // DIAGNOSTIC HDF5 — lecture seule
-  const resumeAttributs = objet => {
-    const attributs = objet && objet.attrs
-      ? objet.attrs
-      : {};
 
-    return Object.fromEntries(
-      Object.entries(attributs).map(([nom, attribut]) => {
-      let valeur = attribut?.value ?? attribut;
+const resumeAttributs = objet => {
+  const attributs = objet?.attrs ?? {};
 
-        if (ArrayBuffer.isView(valeur)) {
-          valeur = Array.from(valeur).slice(0, 20);
-        } else if (Array.isArray(valeur)) {
-          valeur = valeur.slice(0, 20);
-        } else if (typeof valeur === "bigint") {
-          valeur = valeur.toString();
+  return Object.fromEntries(
+    Object.entries(attributs).map(([nom, attribut]) => {
+      const valeur = attribut?.value;
+
+      return [
+        nom,
+        {
+          valeur:
+            valeur === undefined
+              ? "VALEUR_INDISPONIBLE"
+              : typeof valeur === "bigint"
+                ? valeur.toString()
+                : ArrayBuffer.isView(valeur)
+                  ? Array.from(valeur).slice(0, 20)
+                  : Array.isArray(valeur)
+                    ? valeur.slice(0, 20)
+                    : valeur,
+          forme: attribut?.shape,
+          type: attribut?.dtype
         }
+      ];
+    })
+  );
+};
 
-        return [nom, {
-          valeur,
-          forme: attribut && attribut.shape,
-          type: attribut && attribut.dtype
-        }];
-      })
-    );
-  };
 
 console.log(
   "DIAGNOSTIC HDF5 RACINE : " +

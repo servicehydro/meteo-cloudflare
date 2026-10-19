@@ -438,7 +438,15 @@ console.log(
     "radar_history",
     JSON.stringify(historique)
   );
-
+console.log(
+  "DIAGNOSTIC HISTORIQUE RADAR",
+  JSON.stringify(
+    historique.map(m => ({
+      t: m.t,
+      p: m.p
+    }))
+  )
+);
   console.log(
     "Radar OK",
     timestamp,

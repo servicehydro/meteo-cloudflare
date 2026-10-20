@@ -3775,8 +3775,8 @@ body {
   grid-template-areas:
     "header header"
     "debits forecast"
-    "sgl radar"
-    "graph .";
+    "graph radar"
+    "sgl .";
   gap: 10px;
   align-content: start;
   width: 100%;
@@ -3795,6 +3795,7 @@ body {
 .header h1 {
   margin: 0;
   font-size: 24px;
+  color: #168aad;
 }
 
 .debits-container {

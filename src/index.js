@@ -494,7 +494,7 @@ console.log(
     timestamp,
     `${historique.length} mesures`
   );
-
+}
 
 // ==================================================
 // CUMULS RADAR

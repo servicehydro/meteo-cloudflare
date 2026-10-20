@@ -4196,172 +4196,115 @@ ${formatDate(
 
 
 <!-- ============================================== -->
-<!-- DEBIT -->
+<!-- DEBITS -->
 <!-- ============================================== -->
+
+<div style="
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:16px;
+  align-items:start;
+">
+
+<!-- DEBIT VIGICRUE -->
 
 <div class="card debit-card">
 
-<h2>
-Débit Vigicrue
-</h2>
+<h2>Débit Vigicrue</h2>
 
+<div style="display:flex;align-items:baseline;gap:12px;">
 
-<div
-  style="
-    display:flex;
-    align-items:baseline;
-    gap:12px;
-  "
->
+  <div class="main-value">
+    ${formatDebit(total)} m³/s
+  </div>
 
-<div class="main-value">
-
-${formatDebit(total)}
-m³/s
+  <div class="subtitle">
+    Montereau + Épisy
+  </div>
 
 </div>
-
-<div class="subtitle">
-
-Montereau + Épisy
-
-</div>
-
-</div>
-
 
 <table style="margin-top:10px">
 
 <tr>
-
-<th>
-Station
-</th>
-
-<th>
-Débit
-</th>
-
-<th>
-Surface
-</th>
-
+  <th>Station</th>
+  <th>Débit</th>
+  <th>Surface</th>
 </tr>
-
 
 <tr>
-
-<td>
-
-Seine — Montereau
-
-<div class="station-date">
-
-Mesure :
-${formatDate(
-  montereau.observation
-)}
-
-</div>
-
-</td>
-
-<td>
-
-${formatDebit(
-  montereau.debit
-)}
-m³/s
-
-</td>
-
-<td>
-
-21 178 km²
-
-</td>
-
+  <td>
+    Seine — Montereau
+    <div class="station-date">
+      Mesure : ${formatDate(montereau.observation)}
+    </div>
+  </td>
+  <td>${formatDebit(montereau.debit)} m³/s</td>
+  <td>21 178 km²</td>
 </tr>
-
 
 <tr>
-
-<td>
-
-Loing — Épisy
-
-<div class="station-date">
-
-Mesure :
-${formatDate(
-  episy.observation
-)}
-
-</div>
-
-</td>
-
-<td>
-
-${formatDebit(
-  episy.debit
-)}
-m³/s
-
-</td>
-
-<td>
-
-3 900 km²
-
-</td>
-
+  <td>
+    Loing — Épisy
+    <div class="station-date">
+      Mesure : ${formatDate(episy.observation)}
+    </div>
+  </td>
+  <td>${formatDebit(episy.debit)} m³/s</td>
+  <td>3 900 km²</td>
 </tr>
-
 
 <tr class="total">
-
-<td>
-TOTAL
-</td>
-
-<td>
-
-${formatDebit(total)}
-m³/s
-
-</td>
-
-<td></td>
-
+  <td>TOTAL</td>
+  <td>${formatDebit(total)} m³/s</td>
+  <td></td>
 </tr>
 
 </table>
 
-
 ${
   decalageSuperieurUneHeure
-
     ? `
-
-<div class="warning">
-
-⚠ Attention : décalage des relevés entre les stations :
-${Math.round(
-  decalageMinutes
-)}
-minutes
-
-</div>
-
-`
-
+      <div class="warning">
+        ⚠ Attention : décalage des relevés entre les stations :
+        ${Math.round(decalageMinutes)} minutes
+      </div>
+    `
     : ""
 }
 
+</div>
+
+<!-- DEBIT SAINT-FARGEAU-PONTHIERRY -->
+
+<div class="card debit-card">
+
+<h2>Débit Seine</h2>
+
+<div style="
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  flex-wrap:wrap;
+">
+
+  <div class="main-value">
+    ${formatDebit(saintFargeau.debit)} m³/s
+  </div>
+
+  <div class="subtitle">
+    Saint-Fargeau-Ponthierry
+  </div>
 
 </div>
 
+<div class="station-date" style="margin-top:10px">
+  Mesure : ${formatDate(saintFargeau.observation)}
+</div>
+
+</div>
+
+</div>
 
 <!-- ============================================== -->
 <!-- SGL -->

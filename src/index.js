@@ -1987,38 +1987,31 @@ async function collecteEtStockage(env) {
   // OBJET MESURE
   // --------------------------------------------------
 
-  const mesure = {
+const mesure = {
 
-    collecte:
-      maintenant.toISOString(),
+  collecte:
+    maintenant.toISOString(),
 
-    montereau: {
+  montereau: {
+    debit: montereau.debit,
+    observation: montereau.dateObservation
+  },
 
-      debit:
-        montereau.debit,
+  episy: {
+    debit: episy.debit,
+    observation: episy.dateObservation
+  },
 
-      observation:
-        montereau.dateObservation
+  saintFargeau: {
+    debit: saintFargeau.debit,
+    observation: saintFargeau.dateObservation
+  },
 
-    },
+  total: total,
 
-    episy: {
+  sgl: sgl
 
-      debit:
-        episy.debit,
-
-      observation:
-        episy.dateObservation
-
-    },
-
-    total:
-      total,
-
-    sgl:
-      sgl
-
-  };
+};
 
 
    // --------------------------------------------------

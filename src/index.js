@@ -363,57 +363,101 @@ console.log(
     );
   }
 
-  const pluies =
-    RADAR_POINTS.map(
-      point => {
+  // Cinq pixels par ville : centre, nord, sud, ouest, est.
+  const pixelsParVille = RADAR_POINTS.map(point => {
+    const positions = [
+      { ligne: point.ligne, colonne: point.colonne },
+      { ligne: point.ligne - 1, colonne: point.colonne },
+      { ligne: point.ligne + 1, colonne: point.colonne },
+      { ligne: point.ligne, colonne: point.colonne - 1 },
+      { ligne: point.ligne, colonne: point.colonne + 1 }
+    ];
 
-        const valeurBrute =
-          data[
-            point.ligne * cols +
-            point.colonne
-          ];
-
-        if (
-          valeurBrute === 65535 ||
-          valeurBrute === 65534
-        ) {
-
-          return 0;
-
-        }
-
-        return valeurBrute * 0.01*2;
-
+    return positions.map(pixel => {
+      if (
+        pixel.ligne < 0 || pixel.ligne >= rows ||
+        pixel.colonne < 0 || pixel.colonne >= cols
+      ) {
+        return { brute: null, pluie: null };
       }
-    );
 
-  let historique =
-    await env.RADAR_KV.get(
-      "radar_history",
-      "json"
-    );
+      const brute = Number(
+        data[pixel.ligne * cols + pixel.colonne]
+      );
+
+      const pluie =
+        brute === 65535 || brute === 65534
+          ? 0
+          : brute * 0.02;
+
+      return { brute, pluie };
+    });
+  });
+
+  // Moyenne des pixels valides, sans supprimer les valeurs répétées.
+  const pluies = pixelsParVille.map(pixels => {
+    const valeurs = pixels
+      .map(pixel => pixel.pluie)
+      .filter(v => v !== null && Number.isFinite(v));
+
+    return valeurs.length
+      ? Math.round(
+          valeurs.reduce((s, v) => s + v, 0) /
+          valeurs.length * 100
+        ) / 100
+      : 0;
+  });
+
+  // Valeurs brutes conservées pour détecter les pixels figés.
+  const valeursBrutesParVille = pixelsParVille.map(
+    pixels => pixels.map(pixel => pixel.brute)
+  );
+
+  let historique = await env.RADAR_KV.get(
+    "radar_history",
+    "json"
+  );
 
   if (
     !Array.isArray(historique) ||
     historique.some(
-      m =>
-        !Array.isArray(m.p) ||
-        m.p.length !== RADAR_POINTS.length
+      m => !Array.isArray(m.p) ||
+           m.p.length !== RADAR_POINTS.length
     )
   ) {
-    // L'ancien historique utilisait 9 points.
-    // On évite de réassocier ses indices aux 4 nouveaux points.
     historique = [];
   }
 
-  if (
-    !historique.some(
-      m => m.t === timestamp
-    )
-  ) {
+  if (!historique.some(m => m.t === timestamp)) {
+    const precedentes = historique
+      .filter(m => m && m.t && Array.isArray(m.pixels))
+      .sort(
+        (a, b) =>
+          new Date(a.t).getTime() - new Date(b.t).getTime()
+      )
+      .slice(-3);
+
+    // Alerte si un pixel a exactement la même valeur brute
+    // sur quatre relevés : le relevé actuel et les trois précédents.
+    const alertes = valeursBrutesParVille.map(
+      (valeurs, villeIndex) =>
+        valeurs.some((valeur, pixelIndex) => {
+          if (valeur === null || precedentes.length !== 3) {
+            return false;
+          }
+
+          return precedentes.every(m =>
+            Array.isArray(m.pixels?.[villeIndex]) &&
+            m.pixels[villeIndex][pixelIndex] === valeur
+          );
+        })
+    );
+
     historique.push({
       t: timestamp,
-      p: pluies
+      p: pluies,
+      pixels: valeursBrutesParVille,
+      a: alertes
     });
   }
 
@@ -421,39 +465,35 @@ console.log(
     new Date(timestamp).getTime() -
     15 * 24 * 60 * 60 * 1000;
 
-  historique =
-    historique
-      .filter(
-        m =>
-          new Date(m.t).getTime() >= limite
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.t).getTime() -
-          new Date(b.t).getTime()
-      )
-      .slice(-4320);
+  historique = historique
+    .filter(m => new Date(m.t).getTime() >= limite)
+    .sort(
+      (a, b) =>
+        new Date(a.t).getTime() - new Date(b.t).getTime()
+    )
+    .slice(-4320);
 
   await env.RADAR_KV.put(
     "radar_history",
     JSON.stringify(historique)
   );
-console.log(
-  "DIAGNOSTIC HISTORIQUE RADAR",
-  JSON.stringify(
-    historique.map(m => ({
-      t: m.t,
-      p: m.p
-    }))
-  )
-);
+
+  console.log(
+    "DIAGNOSTIC HISTORIQUE RADAR",
+    JSON.stringify(
+      historique.map(m => ({
+        t: m.t,
+        p: m.p,
+        a: m.a
+      }))
+    )
+  );
+
   console.log(
     "Radar OK",
     timestamp,
     `${historique.length} mesures`
   );
-
-}
 
 
 // ==================================================

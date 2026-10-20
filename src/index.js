@@ -3774,11 +3774,13 @@ body {
   grid-template-rows: auto auto auto minmax(0, 1fr);
   grid-template-areas:
     "header header"
-    "debits debits"
-    "sgl forecast"
-    "graph radar";
+    "debits forecast"
+    "sgl radar"
+    "graph .";
   gap: 10px;
   align-content: start;
+  width: 100%;
+  max-width: none;
 }
 
 .header {
@@ -3835,14 +3837,17 @@ body {
   grid-area: radar;
 }
 
+
 .card {
   background: white;
+  border: 1px solid #d6dce2;
   border-radius: 8px;
   padding: 14px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
-.sgl-card h2 {
+  .sgl-card h2 {
   font-size: 15px;
   margin-bottom: 6px;
 }

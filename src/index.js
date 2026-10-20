@@ -2352,26 +2352,31 @@ async function afficherPage(
       ).getTime();
 
 
-    radar =
-      RADAR_POINTS.map(
-        (point, i) => ({
+radar =
+  RADAR_POINTS.map(
+    (point, i) => ({
 
-          nom:
-            point.nom,
+      nom:
+        point.nom,
 
-          bassin:
-            point.bassin,
+      bassin:
+        point.bassin,
 
-          position:
-            point.position,
+      position:
+        point.position,
 
-          ...calculerCumuls(
-            historiqueRadar,
-            i,
-            maintenant
-          )
+      alerte:
+        Array.isArray(derniere.a) &&
+        derniere.a[i] === true,
 
-        })
+      ...calculerCumuls(
+        historiqueRadar,
+        i,
+        maintenant
+      )
+
+    })
+  );
       );
 
   }
@@ -3507,6 +3512,9 @@ ${point.position}
 
 <td>
 ${point.nom}
+${point.alerte
+  ? '<br><small style="color:#b91c1c;font-weight:600">⚠ Alerte radar : pixel figé</small>'
+  : ""}
 </td>
 
 <td>

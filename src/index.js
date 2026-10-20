@@ -3790,28 +3790,16 @@ body {
 
 
 .dashboard {
-
-  height:
-    100%;
-
-  display:
-    grid;
-
-  grid-template-columns:
-    1fr 1fr;
-
-  grid-template-rows:
-   auto auto auto 1fr;
-
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto 1fr;
   grid-template-areas:
     "header header"
-    "debit forecast"
-    "sgl radar"
+    "debits debits"
+    "sgl forecast"
     "graph radar";
-
-  gap:
-    10px;
-
+  gap: 10px;
 }
 
 

@@ -2637,7 +2637,9 @@ function pageAvecMesure(
 
   const episy =
     mesure.episy || {};
-
+  const saintFargeau =
+    mesure.saintFargeau || {};
+  
   const total =
     Number(
       mesure.total || 0

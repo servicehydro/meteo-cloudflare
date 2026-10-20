@@ -497,17 +497,17 @@ console.log(
     JSON.stringify(historique)
   );
 
-  console.log(
-    "DIAGNOSTIC HISTORIQUE RADAR",
-    JSON.stringify(
-historique.slice(-12).map(m => ({
-  t: m.t,
-  p: m.p,
-  pixels: m.pixels,
-  a: m.a
-}))
-    )
-  );
+console.log(
+  "DIAGNOSTIC HISTORIQUE RADAR",
+  JSON.stringify(
+    historique.slice(-12).map(m => ({
+      t: m.t,
+      p: m.p,
+      pixels: m.pixels,
+      a: m.a
+    }))
+  )
+);
 
   console.log(
     "Radar OK",

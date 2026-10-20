@@ -459,7 +459,7 @@ const alertes = valeursBrutesParVille.map(
   (valeurs, villeIndex) =>
     valeurs.some((valeur, pixelIndex) => {
       if (
-        valeur === null ||
+        !Number.isFinite(valeur) ||
         valeur <= 0 ||
         !relevésConsecutifs
       ) {
@@ -468,6 +468,7 @@ const alertes = valeursBrutesParVille.map(
 
       return precedentes.every(m =>
         Array.isArray(m.pixels?.[villeIndex]) &&
+        Number.isFinite(m.pixels[villeIndex][pixelIndex]) &&
         m.pixels[villeIndex][pixelIndex] === valeur
       );
     })

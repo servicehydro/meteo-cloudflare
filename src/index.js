@@ -3626,7 +3626,7 @@ const tableauPrevisions =
 <div class="radar-table">
 
 <h2>
-Précipitations prévues
+Précipitations futures
 </h2>
 
 <table>
@@ -3806,7 +3806,7 @@ body {
   border-radius: 8px;
   padding: 14px;
   width: 100%;
-  max-width: calc(50% - 5px);
+ max-width: none;
   margin: 0;
 }
 
@@ -3979,7 +3979,10 @@ td {
     grid-template-columns: 1fr;
   }
 }
-
+.debit-card h2 {
+  min-height: 42px;
+  margin: 0 0 10px;
+}
 </style>
 
 
@@ -4312,7 +4315,7 @@ Saint-Fargeau-Ponthierry
 <div class="card radar-card">
 
   <h2>
-  Précipitations cumulées radar
+  Précipitations passées cumulées (API radar MF)
   </h2>
 
   ${tableauRadar}

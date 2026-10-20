@@ -3799,15 +3799,20 @@ body {
 .debits-container {
   grid-area: debits;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
+  align-items: start;
   background: white;
   border-radius: 8px;
   padding: 14px;
+  width: 100%;
+  min-width: 0;
+  outline: 3px solid red;
 }
 
 .debits-container > .debit-card {
   min-width: 0;
+  width: 100%;
 }
 
 .debit-card {

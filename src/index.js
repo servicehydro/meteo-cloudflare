@@ -4275,7 +4275,7 @@ ${
 
 <!-- DEBIT SAINT-FARGEAU-PONTHIERRY -->
 
-<div class="card debit-card">
+<div class="card">
 
 <h2>Débit Seine — Saint-Fargeau-Ponthierry</h2>
 

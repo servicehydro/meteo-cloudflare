@@ -4016,9 +4016,6 @@ ${formatDate(
 <!-- DEBITS -->
 <!-- ============================================== -->
 
-<div class="card debits-container">
-
-
 <!-- CONTENEUR DES DEBITS -->
 <div class="card debits-container">
 

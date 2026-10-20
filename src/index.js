@@ -460,77 +460,69 @@ console.log(
 // CUMULS RADAR
 // ==================================================
 
+
 function calculerCumuls(
   historique,
   index,
   maintenant
 ) {
-
   const periodes = {
-
-    "12 h":
-      12 * 60 * 60 * 1000,
-
-    "24 h":
-      24 * 60 * 60 * 1000,
-
-    "2 j":
-      2 * 24 * 60 * 60 * 1000,
-
-    "6 j":
-      6 * 24 * 60 * 60 * 1000,
-
-    "15 j":
-      15 * 24 * 60 * 60 * 1000
-
+    "12 h": 12 * 60 * 60 * 1000,
+    "24 h": 24 * 60 * 60 * 1000,
+    "2 j": 2 * 24 * 60 * 60 * 1000,
+    "6 j": 6 * 24 * 60 * 60 * 1000,
+    "15 j": 15 * 24 * 60 * 60 * 1000
   };
 
   const result = {};
 
-  for (
-    const [nom, duree]
-    of Object.entries(periodes)
-  ) {
-
-    const limite =
-      maintenant - duree;
-
+  // Cumuls existants : inchangés
+  for (const [nom, duree] of Object.entries(periodes)) {
+    const limite = maintenant - duree;
     let somme = 0;
 
-    for (
-      const mesure
-      of historique
-    ) {
+    for (const mesure of historique) {
+      const t = new Date(mesure.t).getTime();
 
-      const t =
-        new Date(
-          mesure.t
-        ).getTime();
-
-      if (
-        t > limite &&
-        t <= maintenant
-      ) {
-
-        somme +=
-          Number(
-            mesure.p[index] || 0
-          );
-
+      if (t > limite && t <= maintenant) {
+        somme += Number(mesure.p[index] || 0);
       }
-
     }
 
-    result[nom] =
-      Math.round(
-        somme * 100
-      ) / 100;
-
+    result[nom] = Math.round(somme * 100) / 100;
   }
 
-  return result;
+  // Cumul sur l'heure glissante
+  const dureeHeure = 60 * 60 * 1000;
+  const limiteHeure = maintenant - dureeHeure;
 
+  const mesuresHeure = historique.filter(m => {
+    const t = new Date(m.t).getTime();
+    return t > limiteHeure && t <= maintenant;
+  });
+
+  const nombreAttendu = 6;
+  const nombreRecu = mesuresHeure.length;
+  const manquantes = Math.max(0, nombreAttendu - nombreRecu);
+
+  const sommeHeure = mesuresHeure.reduce(
+    (total, mesure) =>
+      total + Number(mesure.p[index] || 0),
+    0
+  );
+
+  result["1 h"] = nombreRecu > 0
+    ? Math.round(
+        sommeHeure * nombreAttendu / nombreRecu * 100
+      ) / 100
+    : null;
+
+  result["1 h manquantes"] = manquantes;
+  result["1 h avertissement"] = manquantes >= 3;
+
+  return result;
 }
+
 
 
 // ==================================================
@@ -3419,6 +3411,10 @@ Point
 </th>
 
 <th>
+1 h
+</th>
+
+<th>
 12 h
 </th>
 
@@ -3456,6 +3452,15 @@ ${point.position}
 
 <td>
 ${point.nom}
+</td>
+
+<td>
+${point["1 h"] != null
+  ? point["1 h"].toFixed(1) + " mm"
+  : "—"}
+${point["1 h avertissement"]
+  ? '<br><small>Estimation : données incomplètes</small>'
+  : ""}
 </td>
 
 <td>

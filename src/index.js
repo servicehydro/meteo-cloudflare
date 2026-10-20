@@ -271,17 +271,24 @@ console.log(
     attributs: resumeAttributs(file)
   })
 );
- for (const chemin of ["where", "what", "how"]) {
-    try {
-      const groupe = file.get(chemin);
-      console.log(
-        "DIAGNOSTIC HDF5 GROUPE " + chemin + " : " +
-        stringifyDiagnostic({
-          cles: groupe.keys(),
-          attributs: resumeAttributs(groupe)
-        })
-      );    
-    } catch (error) {
+for (const chemin of ["where", "what", "how"]) {
+  try {
+    const groupe = file.get(chemin);
+
+    console.log(
+      "DIAGNOSTIC HDF5 GROUPE " + chemin + " : " +
+      stringifyDiagnostic({
+        cles: groupe.keys(),
+        attributs: resumeAttributs(groupe)
+      })
+    );
+  } catch (error) {
+    console.log(
+      "DIAGNOSTIC HDF5 GROUPE " + chemin + " — ERREUR :",
+      String(error)
+    );
+  }
+} catch (error) {
       console.log(
         "DIAGNOSTIC HDF5 GROUPE " + chemin + " : " +
         JSON.stringify({

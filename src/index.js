@@ -3949,11 +3949,6 @@ td {
     overflow: auto;
   }
 
-  .debits-container {
-    grid-template-columns: 1fr;
-  }
-}
-
   .dashboard {
     height: auto;
     grid-template-columns: 1fr;
@@ -3979,6 +3974,7 @@ td {
     grid-template-columns: 1fr;
   }
 }
+
 </style>
 
 

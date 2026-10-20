@@ -4027,7 +4027,7 @@ ${formatDate(
   <!-- DEBIT VIGICRUE -->
   <div class="debit-card">
 
-    <h2>Débit Vigicrue</h2>
+    <h2>Débit Vigicrue / Montereau</h2>
 
     <div style="display:flex;align-items:baseline;gap:12px;">
       <div class="main-value">
@@ -4067,11 +4067,6 @@ ${formatDate(
         <td>3 900 km²</td>
       </tr>
 
-      <tr class="total">
-        <td>TOTAL</td>
-        <td>${formatDebit(total)} m³/s</td>
-        <td></td>
-      </tr>
     </table>
 
     ${
@@ -4090,12 +4085,12 @@ ${formatDate(
   <!-- DEBIT SAINT-FARGEAU-PONTHIERRY -->
   <div class="debit-card">
 
-    <h2>Débit Seine — Saint-Fargeau-Ponthierry</h2>
+    <h2>Débit Vigicrue — Saint-Fargeau-Ponthierry</h2>
 
     <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
-      <div class="main-value">
-        ${formatDebit(saintFargeau.debit)} m³/s
-      </div>
+    <div class="main-value" style="margin-top:4px">
+      ${formatDebit(saintFargeau.debit)} m³/s
+    </div>
       <div class="subtitle">
         Saint-Fargeau-Ponthierry
       </div>

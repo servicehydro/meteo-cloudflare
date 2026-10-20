@@ -455,22 +455,23 @@ console.log(
 
     // Alerte si un pixel conserve exactement la même valeur brute
     // sur quatre relevés consécutifs.
-    const alertes = valeursBrutesParVille.map(
-      (valeurs, villeIndex) =>
-        valeurs.some((valeur, pixelIndex) => {
-          if (
-            valeur === null ||
-            !relevésConsecutifs
-          ) {
-            return false;
-          }
+const alertes = valeursBrutesParVille.map(
+  (valeurs, villeIndex) =>
+    valeurs.some((valeur, pixelIndex) => {
+      if (
+        valeur === null ||
+        valeur <= 0 ||
+        !relevésConsecutifs
+      ) {
+        return false;
+      }
 
-          return precedentes.every(m =>
-            Array.isArray(m.pixels?.[villeIndex]) &&
-            m.pixels[villeIndex][pixelIndex] === valeur
-          );
-        })
-    );
+      return precedentes.every(m =>
+        Array.isArray(m.pixels?.[villeIndex]) &&
+        m.pixels[villeIndex][pixelIndex] === valeur
+      );
+    })
+);
 
     historique.push({
       t: timestamp,

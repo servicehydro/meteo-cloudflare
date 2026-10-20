@@ -3780,7 +3780,6 @@ body {
   gap: 10px;
   align-content: start;
   width: 100%;
-  max-width: none;
 }
 
 .header {
@@ -3808,7 +3807,7 @@ body {
   border-radius: 8px;
   padding: 14px;
   width: 100%;
-  max-width: calc(50% - 5px);
+  max-width: none;
   margin: 0;
 }
 

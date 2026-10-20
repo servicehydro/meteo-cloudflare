@@ -3745,49 +3745,27 @@ Meteo hydro Chartrettes
 </title>
 
 
+
 <style>
-
 * {
-
-  box-sizing:
-    border-box;
-
+  box-sizing: border-box;
 }
-
 
 html,
 body {
-
-  margin:0;
-
-  padding:0;
-
-  width:100%;
-
-  height:100%;
-
-  overflow:hidden;
-
-  font-family:
-    Arial,
-    sans-serif;
-
-  background:
-    #f3f5f7;
-
-  color:
-    #222;
-
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background: #f3f5f7;
+  color: #222;
 }
-
 
 body {
-
-  padding:
-    12px;
-
+  padding: 12px;
 }
-
 
 .dashboard {
   height: 100%;
@@ -3802,44 +3780,31 @@ body {
   gap: 10px;
 }
 
-
 .header {
-
-  grid-area:
-    header;
-
-  display:
-    flex;
-
-  justify-content:
-    space-between;
-
-  align-items:
-    center;
-
-  background:
-    white;
-
-  padding:
-    10px 16px;
-
-  border-radius:
-    8px;
-
+  grid-area: header;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 10px 16px;
+  border-radius: 8px;
 }
-
 
 .header h1 {
-
-  margin:
-    0;
-
-  font-size:
-    24px;
-
+  margin: 0;
+  font-size: 24px;
 }
+
+.debits-container {
+  grid-area: debits;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
 .debit-card {
-  grid-area: debit;
+  min-width: 0;
 }
 
 .sgl-card {
@@ -3859,20 +3824,12 @@ body {
 }
 
 .card {
-
-  background:
-    white;
-
-  border-radius:
-    8px;
-
-  padding:
-    14px;
-
-  overflow:
-    hidden;
-
+  background: white;
+  border-radius: 8px;
+  padding: 14px;
+  overflow: hidden;
 }
+
 .sgl-card h2 {
   font-size: 15px;
   margin-bottom: 6px;
@@ -3897,255 +3854,121 @@ body {
 }
 
 .card h2 {
-
-  margin:
-    0 0 10px 0;
-
-  font-size:
-    17px;
-
+  margin: 0 0 10px 0;
+  font-size: 17px;
 }
-
 
 .main-value {
-
-  font-size:
-    38px;
-
-  font-weight:
-    bold;
-
-  margin:
-    4px 0 8px;
-
+  font-size: 38px;
+  font-weight: bold;
+  margin: 4px 0 8px;
 }
-
 
 .sgl-total {
-
-  font-size:
-    32px;
-
-  font-weight:
-    bold;
-
-  margin:
-    4px 0 12px;
-
+  font-size: 32px;
+  font-weight: bold;
+  margin: 4px 0 12px;
 }
-
 
 .subtitle {
-
-  font-size:
-    12px;
-
-  color:
-    #666;
-
+  font-size: 12px;
+  color: #666;
 }
-
 
 table {
-
-  width:
-    100%;
-
-  border-collapse:
-    collapse;
-
-  font-size:
-    13px;
-
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
 }
-
 
 th,
 td {
-
-  padding:
-    6px 5px;
-
-  text-align:
-    left;
-
-  border-bottom:
-    1px solid #e5e5e5;
-
+  padding: 6px 5px;
+  text-align: left;
+  border-bottom: 1px solid #e5e5e5;
 }
-
 
 .total {
-
-  font-weight:
-    bold;
-
-  font-size:
-    14px;
-
+  font-weight: bold;
+  font-size: 14px;
 }
-
 
 .station-date {
-
-  font-size:
-    10px;
-
-  color:
-    #777;
-
-  margin-top:
-    2px;
-
+  font-size: 10px;
+  color: #777;
+  margin-top: 2px;
 }
-
 
 .warning {
-
-  margin-top:
-    10px;
-
-  padding:
-    8px 10px;
-
-  border-radius:
-    5px;
-
-  background:
-    #fff0f0;
-
-  color:
-    #c00000;
-
-  font-size:
-    12px;
-
-  font-weight:
-    bold;
-
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: #fff0f0;
+  color: #c00000;
+  font-size: 12px;
+  font-weight: bold;
 }
-
 
 .sgl-error {
-
-  margin-top:
-    15px;
-
-  padding:
-    8px;
-
-  background:
-    #f3f5f7;
-
-  border-radius:
-    5px;
-
-  font-size:
-    12px;
-
-  color:
-    #777;
-
+  margin-top: 15px;
+  padding: 8px;
+  background: #f3f5f7;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #777;
 }
-
 
 .placeholder {
-
-  height:
-    calc(100% - 35px);
-
-  display:
-    flex;
-
-  align-items:
-    center;
-
-  justify-content:
-    center;
-
-  background:
-    #f3f5f7;
-
-  border-radius:
-    6px;
-
-  color:
-    #777;
-
-  font-size:
-    13px;
-
+  height: calc(100% - 35px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f5f7;
+  border-radius: 6px;
+  color: #777;
+  font-size: 13px;
 }
-
 
 .radar-table {
-
-  overflow-x:
-    auto;
-
-  width:
-    100%;
-
+  overflow-x: auto;
+  width: 100%;
 }
-
 
 @media (max-width: 900px) {
-
   html,
   body {
-
-    height:
-      auto;
-
-    min-height:
-      100%;
-
-    overflow:
-      auto;
-
+    height: auto;
+    min-height: 100%;
+    overflow: auto;
   }
-
 
   .dashboard {
-
-  height:
-    auto;
-
-  grid-template-columns:
-    1fr;
-
-  grid-template-rows:
-    auto;
-
-  grid-template-areas:
-    "header"
-    "debit"
-    "sgl"
-    "forecast"
-    "radar"
-    "graph";
-
-}
-
+    height: auto;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    grid-template-areas:
+      "header"
+      "debits"
+      "sgl"
+      "forecast"
+      "radar"
+      "graph";
+  }
 
   .header {
-
-    grid-column:
-      1;
-
+    grid-column: 1;
   }
-
 
   .card {
-
-    overflow:
-      visible;
-
+    overflow: visible;
   }
 
+  .debits-container {
+    grid-template-columns: 1fr;
+  }
 }
-
 </style>
+
 
 </head>
 
@@ -4185,12 +4008,7 @@ ${formatDate(
 <!-- DEBITS -->
 <!-- ============================================== -->
 
-<div style="
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-  gap:16px;
-  align-items:start;
-">
+<div class="debits-container">
 
 <!-- DEBIT VIGICRUE -->
 

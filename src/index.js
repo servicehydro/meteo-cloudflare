@@ -3799,7 +3799,7 @@ body {
 .debits-container {
   grid-area: debits;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
   align-items: start;
   background: white;

@@ -3779,6 +3779,7 @@ body {
     "graph radar";
   gap: 10px;
   align-content: start;
+  max-width: calc(50% - 5px);
 }
 
 .header {
@@ -3975,9 +3976,9 @@ td {
     overflow: visible;
   }
 
-  .debits-container {
-    grid-template-columns: 1fr;
-  }
+.debits-container {
+  grid-column: 1;
+  grid-row: 2;
 }
 .debit-card h2 {
   min-height: 42px;

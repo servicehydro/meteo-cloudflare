@@ -492,24 +492,42 @@ function calculerCumuls(
     result[nom] = Math.round(somme * 100) / 100;
   }
 
+
   // Cumul sur l'heure glissante
   const dureeHeure = 60 * 60 * 1000;
+  const intervalle = 10 * 60 * 1000;
   const limiteHeure = maintenant - dureeHeure;
 
-  const mesuresHeure = historique.filter(m => {
-    const t = new Date(m.t).getTime();
-    return t > limiteHeure && t <= maintenant;
-  });
+  // Six créneaux attendus, jusqu'à l'heure de référence incluse.
+  // On tolère un léger décalage des horodatages du produit radar.
+  const tolerance = 2 * 60 * 1000;
+  const valeursParCreneau = new Map();
+
+  for (const mesure of historique) {
+    const t = new Date(mesure.t).getTime();
+
+    if (t <= limiteHeure || t > maintenant) continue;
+
+    const creneau = Math.round(t / intervalle);
+    const tempsAttendu = creneau * intervalle;
+
+    if (Math.abs(t - tempsAttendu) > tolerance) continue;
+
+    // Ne compter qu'un relevé par créneau
+    if (!valeursParCreneau.has(creneau)) {
+      valeursParCreneau.set(
+        creneau,
+        Number(mesure.p[index] || 0)
+      );
+    }
+  }
 
   const nombreAttendu = 6;
-  const nombreRecu = mesuresHeure.length;
-  const manquantes = Math.max(0, nombreAttendu - nombreRecu);
+  const nombreRecu = valeursParCreneau.size;
+  const manquantes = nombreAttendu - nombreRecu;
 
-  const sommeHeure = mesuresHeure.reduce(
-    (total, mesure) =>
-      total + Number(mesure.p[index] || 0),
-    0
-  );
+  const sommeHeure = [...valeursParCreneau.values()]
+    .reduce((total, valeur) => total + valeur, 0);
 
   result["1 h"] = nombreRecu > 0
     ? Math.round(
@@ -520,8 +538,6 @@ function calculerCumuls(
   result["1 h manquantes"] = manquantes;
   result["1 h avertissement"] = manquantes >= 3;
 
-  return result;
-}
 
 
 

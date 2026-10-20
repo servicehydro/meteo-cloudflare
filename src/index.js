@@ -3799,8 +3799,15 @@ body {
   grid-area: debits;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 16px;
   align-items: start;
+  background: white;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.debits-container > .debit-card {
+  min-width: 0;
 }
 
 .debit-card {
@@ -3942,6 +3949,11 @@ td {
     overflow: auto;
   }
 
+  .debits-container {
+    grid-template-columns: 1fr;
+  }
+}
+
   .dashboard {
     height: auto;
     grid-template-columns: 1fr;
@@ -4008,7 +4020,7 @@ ${formatDate(
 <!-- DEBITS -->
 <!-- ============================================== -->
 
-<div class="debits-container">
+<div class="card debits-container">
 
 <!-- DEBIT VIGICRUE -->
 

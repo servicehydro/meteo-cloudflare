@@ -3615,7 +3615,7 @@ const tableauPrevisions =
 <div class="radar-table">
 
 <h2>
-Précipitations futures
+Précipitations futures (API MF)
 </h2>
 
 <table>
@@ -4309,7 +4309,7 @@ Saint-Fargeau-Ponthierry
 <div class="card radar-card">
 
   <h2>
-  Précipitations passées cumulées (API radar MF)
+  Précipitations passées cumulées (MF DP RADAR)
   </h2>
 
   ${tableauRadar}

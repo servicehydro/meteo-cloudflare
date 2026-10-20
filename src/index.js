@@ -3615,7 +3615,7 @@ const tableauPrevisions =
 <div class="radar-table">
 
 <h2>
-Précipitations futures (API MF)
+Précipitations futures (MF)
 </h2>
 
 <table>

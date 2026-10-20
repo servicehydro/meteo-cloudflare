@@ -288,17 +288,7 @@ for (const chemin of ["where", "what", "how"]) {
       String(error)
     );
   }
-} catch (error) {
-      console.log(
-        "DIAGNOSTIC HDF5 GROUPE " + chemin + " : " +
-        JSON.stringify({
-          cles: groupe.keys(),
-          attributs: resumeAttributs(groupe)
-        })
-      );
-    }
-  }
-
+}
   const dataset =
     file.get(
       "dataset1/data1/data"

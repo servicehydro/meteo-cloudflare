@@ -4018,103 +4018,92 @@ ${formatDate(
 
 <div class="card debits-container">
 
-<!-- DEBIT VIGICRUE -->
 
-<div class="card debit-card">
+<!-- CONTENEUR DES DEBITS -->
+<div class="card debits-container">
 
-<h2>Débit Vigicrue</h2>
+  <!-- DEBIT VIGICRUE -->
+  <div class="debit-card">
 
-<div style="display:flex;align-items:baseline;gap:12px;">
+    <h2>Débit Vigicrue</h2>
 
-  <div class="main-value">
-    ${formatDebit(total)} m³/s
-  </div>
-
-  <div class="subtitle">
-    Montereau + Épisy
-  </div>
-
-</div>
-
-<table style="margin-top:10px">
-
-<tr>
-  <th>Station</th>
-  <th>Débit</th>
-  <th>Surface</th>
-</tr>
-
-<tr>
-  <td>
-    Seine — Montereau
-    <div class="station-date">
-      Mesure : ${formatDate(montereau.observation)}
-    </div>
-  </td>
-  <td>${formatDebit(montereau.debit)} m³/s</td>
-  <td>21 178 km²</td>
-</tr>
-
-<tr>
-  <td>
-    Loing — Épisy
-    <div class="station-date">
-      Mesure : ${formatDate(episy.observation)}
-    </div>
-  </td>
-  <td>${formatDebit(episy.debit)} m³/s</td>
-  <td>3 900 km²</td>
-</tr>
-
-<tr class="total">
-  <td>TOTAL</td>
-  <td>${formatDebit(total)} m³/s</td>
-  <td></td>
-</tr>
-
-</table>
-
-${
-  decalageSuperieurUneHeure
-    ? `
-      <div class="warning">
-        ⚠ Attention : décalage des relevés entre les stations :
-        ${Math.round(decalageMinutes)} minutes
+    <div style="display:flex;align-items:baseline;gap:12px;">
+      <div class="main-value">
+        ${formatDebit(total)} m³/s
       </div>
-    `
-    : ""
-}
+      <div class="subtitle">
+        Montereau + Épisy
+      </div>
+    </div>
 
-</div>
+    <table style="margin-top:10px">
+      <tr>
+        <th>Station</th>
+        <th>Débit</th>
+        <th>Surface</th>
+      </tr>
 
-<!-- DEBIT SAINT-FARGEAU-PONTHIERRY -->
+      <tr>
+        <td>
+          Seine — Montereau
+          <div class="station-date">
+            Mesure : ${formatDate(montereau.observation)}
+          </div>
+        </td>
+        <td>${formatDebit(montereau.debit)} m³/s</td>
+        <td>21 178 km²</td>
+      </tr>
 
-<div class="card">
+      <tr>
+        <td>
+          Loing — Épisy
+          <div class="station-date">
+            Mesure : ${formatDate(episy.observation)}
+          </div>
+        </td>
+        <td>${formatDebit(episy.debit)} m³/s</td>
+        <td>3 900 km²</td>
+      </tr>
 
-<h2>Débit Seine — Saint-Fargeau-Ponthierry</h2>
+      <tr class="total">
+        <td>TOTAL</td>
+        <td>${formatDebit(total)} m³/s</td>
+        <td></td>
+      </tr>
+    </table>
 
-<div style="
-  display:flex;
-  align-items:baseline;
-  gap:12px;
-  flex-wrap:wrap;
-">
+    ${
+      decalageSuperieurUneHeure
+        ? `
+          <div class="warning">
+            ⚠ Attention : décalage des relevés entre les stations :
+            ${Math.round(decalageMinutes)} minutes
+          </div>
+        `
+        : ""
+    }
 
-  <div class="main-value">
-    ${formatDebit(saintFargeau.debit)} m³/s
   </div>
 
-  <div class="subtitle">
-    Saint-Fargeau-Ponthierry
+  <!-- DEBIT SAINT-FARGEAU-PONTHIERRY -->
+  <div class="debit-card">
+
+    <h2>Débit Seine — Saint-Fargeau-Ponthierry</h2>
+
+    <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+      <div class="main-value">
+        ${formatDebit(saintFargeau.debit)} m³/s
+      </div>
+      <div class="subtitle">
+        Saint-Fargeau-Ponthierry
+      </div>
+    </div>
+
+    <div class="station-date" style="margin-top:10px">
+      Mesure : ${formatDate(saintFargeau.observation)}
+    </div>
+
   </div>
-
-</div>
-
-<div class="station-date" style="margin-top:10px">
-  Mesure : ${formatDate(saintFargeau.observation)}
-</div>
-
-</div>
 
 </div>
 

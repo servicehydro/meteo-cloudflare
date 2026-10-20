@@ -574,6 +574,8 @@ function calculerCumuls(
 
   result["1 h manquantes"] = manquantes;
   result["1 h avertissement"] = manquantes >= 3;
+   
+  return result;
 }
 
 

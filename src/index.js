@@ -1737,7 +1737,10 @@ async function collecteEtStockage(env) {
     await getDebit(
       "F447000302"
     );
-
+  console.log(
+    "SAINT-FARGEAU :",
+    saintFargeau
+  );
   const sgl = {
 
     aube: {

@@ -435,7 +435,7 @@ console.log(
         (a, b) =>
           new Date(b.t).getTime() - new Date(a.t).getTime()
       )
-      .slice(-3);
+      .slice(0, 3);
 
     // Vérifier que les trois relevés précédents sont espacés
     // d'environ 10 minutes et précèdent bien le relevé actuel.

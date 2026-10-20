@@ -426,20 +426,42 @@ console.log(
   }
 
   if (!historique.some(m => m.t === timestamp)) {
+    const intervalleRadar = 10 * 60 * 1000;
+    const toleranceRadar = 2 * 60 * 1000;
+
     const precedentes = historique
       .filter(m => m && m.t && Array.isArray(m.pixels))
       .sort(
         (a, b) =>
-          new Date(a.t).getTime() - new Date(b.t).getTime()
+          new Date(b.t).getTime() - new Date(a.t).getTime()
       )
       .slice(-3);
 
-    // Alerte si un pixel a exactement la même valeur brute
-    // sur quatre relevés : le relevé actuel et les trois précédents.
+    // Vérifier que les trois relevés précédents sont espacés
+    // d'environ 10 minutes et précèdent bien le relevé actuel.
+    const tempsActuel = new Date(timestamp).getTime();
+
+    const relevésConsecutifs =
+      precedentes.length === 3 &&
+      precedentes.every((m, i) => {
+        const temps = new Date(m.t).getTime();
+        const attendu = tempsActuel - (i + 1) * intervalleRadar;
+
+        return (
+          temps < tempsActuel &&
+          Math.abs(temps - attendu) <= toleranceRadar
+        );
+      });
+
+    // Alerte si un pixel conserve exactement la même valeur brute
+    // sur quatre relevés consécutifs.
     const alertes = valeursBrutesParVille.map(
       (valeurs, villeIndex) =>
         valeurs.some((valeur, pixelIndex) => {
-          if (valeur === null || precedentes.length !== 3) {
+          if (
+            valeur === null ||
+            !relevésConsecutifs
+          ) {
             return false;
           }
 

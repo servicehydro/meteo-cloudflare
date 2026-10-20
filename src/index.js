@@ -1602,10 +1602,16 @@ const response = await fetch(url, {
 
   }
 
-  const derniere =
-    observations[
-      observations.length - 1
-    ];
+const derniere =
+  observations[
+    observations.length - 1
+  ];
+
+if (!derniere) {
+  throw new Error(
+    "Aucune observation radar disponible"
+  );
+}
 
   return {
 

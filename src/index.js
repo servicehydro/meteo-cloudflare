@@ -3545,14 +3545,7 @@ ${point.alerte
   : ""}
 </td>
 
-<td>
-${point["1 h"] != null
-  ? point["1 h"].toFixed(1) + " mm"
-  : "—"}
-${point["1 h avertissement"]
-  ? '<br><small>Estimation : données incomplètes</small>'
-  : ""}
-</td>
+
 
 <td>
 ${point["12 h"]?.toFixed(1) ?? "—"} mm

@@ -3768,16 +3768,17 @@ body {
 }
 
 .dashboard {
-  height: 100%;
+  min-height: 100%;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto auto 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   grid-template-areas:
     "header header"
     "debits debits"
     "sgl forecast"
     "graph radar";
   gap: 10px;
+  align-content: start;
 }
 
 .header {

@@ -3779,7 +3779,6 @@ body {
     "graph radar";
   gap: 10px;
   align-content: start;
-  max-width: calc(50% - 5px);
 }
 
 .header {
@@ -3807,7 +3806,7 @@ body {
   border-radius: 8px;
   padding: 14px;
   width: 100%;
- max-width: none;
+  max-width: calc(50% - 5px);
   margin: 0;
 }
 

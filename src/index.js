@@ -2283,46 +2283,48 @@ async function afficherPage(
   periode = "tout"
 ) {
 
-  const liste =
-    await env[
-      "HYDRO-CHARTDATA"
-    ].list({
-      prefix:
-        "debit_"
-    });
+  
+  const kv = env["HYDRO-CHARTDATA"];
 
+  // Récupération de toutes les clés debit_ (pagination KV)
+  let curseur = undefined;
+  let cles = [];
 
-  const clesDebit =
-    (liste.keys || [])
-      .filter(
-        key =>
-          /^debit_\d{4}-\d{2}-\d{2}T/.test(
-            key.name
-          )
-      );
+  do {
+    const options = {
+      prefix: "debit_",
+      limit: 1000
+    };
 
+    if (curseur) {
+      options.cursor = curseur;
+    }
 
-  if (
-    clesDebit.length === 0
-  ) {
+    const liste = await kv.list(options);
 
+    const nouvellesCles = (liste.keys || [])
+      .filter(key =>
+        /^debit_\d{4}-\d{2}-\d{2}T/.test(key.name)
+      )
+      .map(key => key.name);
+
+    cles.push(...nouvellesCles);
+
+    curseur = liste.list_complete
+      ? undefined
+      : liste.cursor;
+
+  } while (curseur);
+
+  if (cles.length === 0) {
     return pageVide();
-
   }
 
+  // Sélection de la clé la plus récente
+  cles.sort();
 
-  const cles =
-    clesDebit
-      .map(
-        key =>
-          key.name
-      )
-      .sort()
-      .reverse();
+  const derniereCle = cles[cles.length - 1];
 
-
-  const derniereCle =
-    cles[0];
 
 
   const texte =
